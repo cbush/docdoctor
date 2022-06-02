@@ -2,7 +2,7 @@
   "name": "docdoctor",
   "version": "0.0.1",
   "description": "Fix up rST",
-  "main": "./build",
+  "main": "./build/main.js",
   "bin": {
     "docdoctor": "./build/main.js"
   },
@@ -36,6 +36,7 @@
     "typescript": "^4"
   },
   "dependencies": {
+    "restructured": "^0.0.11",
     "yargs": "^15.4.1"
   }
 }
