@@ -101,7 +101,7 @@ const fixup = async (args: {
     rst,
     snootyConfig,
   });
-  console.log(document.toString());
+  process.stdout.write(document.toString());
 };
 
 type ExampleCommandArgs = { paths: string[]; snootyTomlPath?: string };
