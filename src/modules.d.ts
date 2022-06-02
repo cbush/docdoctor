@@ -1,7 +1,9 @@
 declare module "restructured" {
+  export type Location = { offset: number; line: number; column: number };
   export type Node = Record<string, unknown> & {
-    position: { offset: number; line: number; column: number };
+    position: { start: Location; end: Location };
     blanklines: string[];
+    value?: string;
     indent?: { width: number; offset: number };
     children?: AnyNode[];
   };
@@ -12,6 +14,7 @@ declare module "restructured" {
   };
   export type ParentNode = Node & {
     children: AnyNode[];
+    value: never;
     // https://github.com/seikichi/restructured/blob/d08085c1abedf72f77307c15f14571ebcd1e56ba/src/Type.js
     type:
       | "document" // Document Structure

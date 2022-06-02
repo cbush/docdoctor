@@ -3,11 +3,11 @@ import { AnyNode } from "restructured";
 
 const getChildren = (node: AnyNode) => node.children ?? [];
 
-export const find = (
+export const findAll = (
   node: AnyNode,
   predicate: (node: AnyNode, indexPath: tv.IndexPath) => boolean
-): AnyNode | undefined => {
-  return tv.find(node, {
+): AnyNode[] => {
+  return tv.findAll(node, {
     getChildren,
     predicate,
   });
@@ -24,7 +24,7 @@ export const visit = (
     onLeave:
       onLeave ??
       (() => {
-        // do nothing
+        // do nothing -- see https://github.com/dabbott/tree-visit/pull/12
       }),
   });
 };

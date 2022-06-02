@@ -36,6 +36,7 @@
     "typescript": "^4"
   },
   "dependencies": {
+    "magic-string": "^0.26.2",
     "restructured": "^0.0.11",
     "tree-visit": "^0.1.2",
     "yargs": "^15.4.1"

@@ -1,29 +1,60 @@
+import { strict as assert } from "assert";
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
 import restructured from "restructured";
-import { find, visit } from "../tree";
+import MagicString from "magic-string";
+import { findAll, visit } from "../tree";
+
+// https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
+// Note: = reused, but uses top title for first section depth
+const titleAdornmentCharacters = ["=", "-", "=", "~", "`", "^", "_"];
 
 const fixup = async (path: string): Promise<void> => {
-  const rst = await fs.readFile(path, "utf8");
-  const parsed = restructured.parse(rst, {
+  const rawText = await fs.readFile(path, "utf8");
+  const document = new MagicString(rawText);
+  const parsed = restructured.parse(document.original, {
     blanklines: true,
     indent: true,
     position: true,
   });
 
-  let sectionDepth = 0;
+  let sectionDepth = 1;
   visit(parsed, (node) => {
     switch (node.type) {
       case "section":
         sectionDepth = node.depth as number;
+        if (
+          !(1 <= sectionDepth && sectionDepth < titleAdornmentCharacters.length)
+        ) {
+          throw new Error(`Invalid section depth: ${sectionDepth}`);
+        }
         break;
       case "title": {
-        const text = find(node, (n) => n.type === "text");
-        console.log(`${sectionDepth} - ${text?.value}`);
-        break;
+        const texts = findAll(node, (n) => n.type === "text");
+        if (texts.length !== 1) {
+          throw new Error(
+            `Not exactly 1 text node found in title. Not sure how to handle that! Text: ${texts
+              .map((text) => text.value)
+              .join(" ")}`
+          );
+        }
+        const text = texts[0].value;
+        const titleNode = node;
+        const { start, end } = titleNode.position;
+        const titleLine = titleAdornmentCharacters[sectionDepth - 1].repeat(
+          text.length
+        );
+
+        const modifiedTitle = `${
+          sectionDepth === 1 ? `${titleLine}\n` : ""
+        }${text}\n${titleLine}\n`;
+
+        document.overwrite(start.offset, end.offset, modifiedTitle);
       }
     }
   });
+
+  console.log(document.toString());
 };
 
 type ExampleCommandArgs = { paths: string[] };
