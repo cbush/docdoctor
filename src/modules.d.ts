@@ -1,19 +1,20 @@
 declare module "restructured" {
-  export type Node = {
+  export type Node = Record<string, unknown> & {
     position: { offset: number; line: number; column: number };
     blanklines: string[];
     indent?: { width: number; offset: number };
+    children?: AnyNode[];
   };
   export type ValueNode = Node & {
     type: "text" | "unknown_line";
     value: string;
+    children: never;
   };
-  export type AnyNode = ValueNode | ParentNode;
   export type ParentNode = Node & {
     children: AnyNode[];
     // https://github.com/seikichi/restructured/blob/d08085c1abedf72f77307c15f14571ebcd1e56ba/src/Type.js
-    type: // Document Structure
-    | "document"
+    type:
+      | "document" // Document Structure
       | "section"
       | "title"
       | "transition"
@@ -86,8 +87,8 @@ declare module "restructured" {
       // restructured Original Elements
       | "directive"
       | "interpreted_text";
-    [additionalProperty: string]: unknown;
   };
+  export type AnyNode = ValueNode | ParentNode;
   export function parse(
     rst: string,
     options?: {
