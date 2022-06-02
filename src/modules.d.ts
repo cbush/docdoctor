@@ -96,5 +96,5 @@ declare module "restructured" {
       blanklines?: boolean;
       indent?: boolean;
     }
-  ): ParentNode;
+  ): AnyNode;
 }
