@@ -1,0 +1,9 @@
+define: prefix docs/atlas/app-services
+define: base https://www.mongodb.com/${prefix}
+define: versions master
+
+# raw: <source file> -> ${base}/<destination>/
+raw: ${prefix}/a/ -> ${base}/b/
+raw: ${prefix}/b/ -> ${base}/c/
+raw: ${prefix}/c/ -> ${base}/d/
+raw: ${prefix}/d/ -> ${base}/e/

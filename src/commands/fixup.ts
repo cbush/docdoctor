@@ -26,7 +26,7 @@ const loadSnootyConfig = async (
 
 // https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
 // Note: = reused, but uses top title for first section depth
-const titleAdornmentCharacters = ["=", "-", "~", "`", "^", "_", "="];
+const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
 
 const fixTitles = (args: {
   path: string;
@@ -152,9 +152,9 @@ const fixup = async (args: {
   await fs.writeFile(path, document.toString(), "utf8");
 };
 
-type ExampleCommandArgs = { paths: string[]; snootyTomlPath?: string };
+type FixupArgs = { paths: string[]; snootyTomlPath?: string };
 
-const commandModule: CommandModule<unknown, ExampleCommandArgs> = {
+const commandModule: CommandModule<unknown, FixupArgs> = {
   command: "fixup <paths..>",
   builder(args) {
     return args
