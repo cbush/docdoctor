@@ -37,11 +37,8 @@ const getText = (args: {
   snootyConfig: SnootyConfig;
 }) => {
   const { inputPath, rst, document, snootyConfig } = args;
+  const desiredText: string[] = [];
   visit(rst, (node) => {
-    if (node.type != "title" && node.type != "paragraph") {
-      const { start, end } = node.position;
-      document.overwrite(start.offset, end.offset, "");
-    }
     switch (node.type) {
       case "title": {
         const textNodes = findAll(node, (n) => n.type === "text");
@@ -51,21 +48,14 @@ const getText = (args: {
           );
         }
         const text = textNodes.map((textNode) => textNode.value).join("");
-        if (/\n/.test(text)) {
-          throw new Error(
-            `In ${inputPath}, found multiline title. Not sure how to handle that! Text: '${text}'`
-          );
-        }
         // If the last character of the title is not a period, add one.
         // Missing periods will negatively impact readability.
         const lastTitleChar = text.charAt(text.length - 1);
         let titleText = text;
         if (lastTitleChar != ".") {
-          titleText = text + ".\n";
+          titleText = text + ".";
         }
-        // Replace the original title node raw text with the new title raw text.
-        const { start, end } = node.position;
-        document.overwrite(start.offset, end.offset, titleText);
+        desiredText.push(titleText);
         break;
       }
       case "paragraph": {
@@ -76,13 +66,17 @@ const getText = (args: {
           );
         }
         const text = textNodes.map((textNode) => textNode.value).join("");
+        const unwantedText = new RegExp("<.*?>");
         const paragraphText = text;
-        const { start, end } = node.position;
-        document.overwrite(start.offset, end.offset, paragraphText);
+        if (paragraphText.includes("<")) {
+          paragraphText.replace("<", "");
+        }
+        desiredText.push(paragraphText);
         break;
       }
     }
   });
+  return desiredText;
 };
 
 const replaceSourceConstants = (
@@ -109,21 +103,15 @@ const getReadabilityText = async (args: {
     indent: true,
     position: true,
   });
-  getText({
+  const scorableText = getText({
     inputPath,
     document,
     rst,
     snootyConfig,
   });
-
-  if (!document.hasChanged()) {
-    console.log(`Visited ${inputPath} -- no text to score`);
-    return;
-  }
-
-  console.log(`Updating ${outputPath}`);
+  console.log(`Creating ${outputPath}`);
   fs.mkdir(outputDir, { recursive: true });
-  await fs.writeFile(outputPath, document.toString(), "utf8");
+  await fs.writeFile(outputPath, scorableText.join("\r\n"), "utf8");
 };
 
 type ReadableArgs = { paths: string[]; snootyTomlPath?: string };
