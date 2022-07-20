@@ -1,0 +1,56 @@
+name = "realm"
+title = "Realm"
+
+intersphinx = [
+  "https://www.mongodb.com/docs/atlas/app-services/objects.inv"
+]
+
+# These are the pages that open when you click on them (instead of just being containers)
+toc_landing_pages = [
+  # Tutorial
+  "/tutorial",
+  # SDKs
+  "/sdk",
+  "/sdk/java",
+  "/sdk/java/api",
+  "/sdk/swift",
+  "/sdk/swift/application-services",
+  "/sdk/swift/work-with-users",
+  "/sdk/node",
+  "/sdk/react-native",
+  "/sdk/kotlin",
+  "/sdk/kotlin/errors",
+  "/sdk/web",
+  "/sdk/dotnet",
+  "/sdk/dotnet/examples/work-with-users",
+  "/sdk/flutter",
+  "/sdk/swift/examples/work-with-users",
+  "/sdk/flutter/realm-database",
+  "/sdk/flutter/app-services",
+  "/sdk/flutter/sync",
+  # Old SDKs
+  "/android",
+  "/ios",
+  "/node",
+  "/react-native",
+  "/web",
+  "/dotnet",
+  # Other
+  "/studio",
+  "/release-notes"
+]
+
+[substitutions]
+atlas = "Atlas"
+
+[constants]
+admin-api-page = "/admin/api/v3/#"
+base-url = "https://www.mongodb.com/docs/realm"
+kotlin-sdk-version = "1.0.1"
+kotlinx-coroutines-version = "1.6.0-native-mt"
+kotlin-sync-prefix = "https://www.mongodb.com/docs/realm-sdks/kotlin/1.0.0/library-sync/-realm%20-kotlin%20-s-d-k%20-%20-sync/"
+kotlin-local-prefix = "https://www.mongodb.com/docs/realm-sdks/kotlin/1.0.0/library-base/-realm%20-kotlin%20-s-d-k/"
+java-sdk-version = "10.11.1"
+max-graphql-resolvers = "ten"
+max-graphql-relationship-depth = "five"
+log-retention-time = "10 days"
