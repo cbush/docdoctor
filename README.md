@@ -15,3 +15,6 @@ In addition to converting the rST to plain text, this command removes
 markup and things that would skew readability scores, such as code examples.
 It also adds punctuation to titles and makes other small tweaks to things
 that would otherwise falsely impact the readability score of the page text.
+
+### Todo
+- Does not handle any directives, such as info or procedure - just throws out all text in the steps.

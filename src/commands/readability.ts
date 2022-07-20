@@ -30,6 +30,7 @@ const loadSnootyConfig = async (
 // Note: = reused, but uses top title for first section depth
 const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
 
+// TODO: Does not currently handle directives - just throws out text in info or steps, for example.
 const getText = (args: {
   inputPath: string;
   document: MagicString;
@@ -74,6 +75,7 @@ const getText = (args: {
   return desiredText;
 };
 
+// TODO: Replace source constants in the files. If we're using them, they skew readability.
 const replaceSourceConstants = (
   s: string,
   constants: Record<string, string>
