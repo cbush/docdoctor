@@ -47,15 +47,14 @@ const getText = (args: {
             `In ${inputPath}, not at least 1 text node found in title. Not sure how to handle that!`
           );
         }
-        const text = textNodes.map((textNode) => textNode.value).join("");
+        let text = textNodes.map((textNode) => textNode.value).join("");
         // If the last character of the title is not a period, add one.
         // Missing periods will negatively impact readability.
         const lastTitleChar = text.charAt(text.length - 1);
-        let titleText = text;
         if (lastTitleChar != ".") {
-          titleText = text + ".";
+          text = text + ".";
         }
-        desiredText.push(titleText);
+        desiredText.push(text + "\n");
         break;
       }
       case "paragraph": {
@@ -67,11 +66,7 @@ const getText = (args: {
         }
         const text = textNodes.map((textNode) => textNode.value).join("");
         const unwantedText = new RegExp("<.*?>");
-        const paragraphText = text;
-        if (paragraphText.includes("<")) {
-          paragraphText.replace("<", "");
-        }
-        desiredText.push(paragraphText);
+        desiredText.push(text.replace(unwantedText, ""));
         break;
       }
     }
