@@ -1,6 +1,6 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
-import restructured, { AnyNode } from "restructured";
+import restructured, { AnyNode } from "../restructured";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
 import toml from "toml";
