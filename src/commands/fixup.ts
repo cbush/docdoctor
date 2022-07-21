@@ -1,6 +1,6 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
-import restructured, { AnyNode } from "restructured";
+import restructured, { AnyNode } from "../restructured";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
 import toml from "toml";
@@ -26,7 +26,8 @@ const loadSnootyConfig = async (
 
 // https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
 // Note: = reused, but uses top title for first section depth
-const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
+// See also "Inline Markup" slide: https://docs.google.com/presentation/d/125-MvuDr66EIUgb3bVWCX3Uh2Jj2MkM8kM0iM_JoOuA/edit#slide=id.g62b8cdf916_1_101
+const titleAdornmentCharacters = ["=", "-", "~", "`", "+", "_", "="];
 
 const fixTitles = (args: {
   path: string;
