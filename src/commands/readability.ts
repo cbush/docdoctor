@@ -70,6 +70,13 @@ const getText = (args: {
         desiredText.push(text.replace(unwantedText, ""));
         break;
       }
+      case "directive": {
+        const textNodes = findAll(node, (n) => n.type === "text");
+        const text = textNodes.map((textNode) => textNode.value).join("");
+        const unwantedText = new RegExp("<.*?>");
+        desiredText.push(text.replace(unwantedText, ""));
+        break;
+      }
     }
   });
   return desiredText;
