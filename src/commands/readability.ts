@@ -99,7 +99,7 @@ const getReadabilityText = async (args: {
 }): Promise<void> => {
   const { inputPath, snootyConfig } = args;
   const outputPath = path.join("output", inputPath);
-  const outputDir = path.dirname(outputPath)
+  const outputDir = path.dirname(outputPath);
   const rawText = await fs.readFile(inputPath, "utf8");
   const document = new MagicString(rawText);
   const rst = restructured.parse(document.original, {
@@ -114,7 +114,8 @@ const getReadabilityText = async (args: {
     snootyConfig,
   });
   console.log(`Creating ${outputPath}`);
-  fs.mkdir(outputDir, { recursive: true });
+  console.log(`Output directory: ${outputDir}`);
+  await fs.mkdir(outputDir, { recursive: true });
   await fs.writeFile(outputPath, scorableText.join("\r\n"), "utf8");
 };
 
