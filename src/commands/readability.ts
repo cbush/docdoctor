@@ -4,9 +4,7 @@ import restructured, { AnyNode } from "../restructured";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
 import toml from "toml";
-import { strict as assert } from "assert";
 import * as path from "path";
-import { title } from "process";
 
 type SnootyConfig = {
   constants: Record<string, string>;
@@ -30,24 +28,18 @@ const loadSnootyConfig = async (
 // Note: = reused, but uses top title for first section depth
 const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
 
-// TODO: Does not currently handle directives - just throws out text in info or steps, for example.
 const getText = (args: {
   inputPath: string;
   document: MagicString;
   rst: AnyNode;
   snootyConfig: SnootyConfig;
 }) => {
-  const { inputPath, rst, document, snootyConfig } = args;
+  const { inputPath, rst, snootyConfig } = args;
   const desiredText: string[] = [];
   visit(rst, (node) => {
     switch (node.type) {
       case "title": {
         const textNodes = findAll(node, (n) => n.type === "text");
-        if (textNodes.length < 1) {
-          throw new Error(
-            `In ${inputPath}, not at least 1 text node found in title. Not sure how to handle that!`
-          );
-        }
         let text = textNodes.map((textNode) => textNode.value).join("");
         // If the last character of the title is not a period, add one.
         // Missing periods will negatively impact readability.
@@ -58,21 +50,25 @@ const getText = (args: {
         desiredText.push(text + "\n");
         break;
       }
+      // TODO: Look into whether newlines in the paragraphs are inflating 
+      // readability scores to be artificially high.
+      // If so, remove newlines in paragraphs and directives nodes.
       case "paragraph": {
         const textNodes = findAll(node, (n) => n.type === "text");
-        if (textNodes.length < 1) {
-          throw new Error(
-            `In ${inputPath}, not at least 1 text node found in paragraphs. Not sure how to handle that!`
-          );
-        }
         const text = textNodes.map((textNode) => textNode.value).join("");
+        // Remove the <some-anchor-tag> markup that the rST parsing leaves 
+        // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
         desiredText.push(text.replace(unwantedText, ""));
         break;
       }
+      // TODO: Clean up directive output. Check for tables, code blocks,
+      // and other unwanted elements that will skew readability scores.
       case "directive": {
         const textNodes = findAll(node, (n) => n.type === "text");
         const text = textNodes.map((textNode) => textNode.value).join("");
+        // Remove the <some-anchor-tag> markup that the rST parsing leaves 
+        // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
         desiredText.push(text.replace(unwantedText, ""));
         break;
