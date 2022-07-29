@@ -30,7 +30,7 @@
     "eslint-plugin-tsdoc": "^0.2.14",
     "jest": "^26",
     "prettier": "^2",
-    "release-it": "^14",
+    "release-it": "^15.2.0",
     "ts-jest": "^26.5.6",
     "typedoc": "^0",
     "typescript": "^4"
