@@ -23,8 +23,10 @@ const parse = (
     position?: boolean;
     indent?: boolean;
     blanklines?: boolean;
+    depth?: number;
   }
 ): AnyNode => {
+  const depth = options?.depth ?? 0;
   const root = restructured.parse(rst, {
     ...options,
     position: true,
@@ -35,7 +37,8 @@ const parse = (
   visit(
     root,
     () => {
-      // Do nothing on enter
+      // Do nothing on enter because we'll be actively modifying the tree during
+      // this visit and don't want to visit the new nodes.
     },
     (node) => {
       if (node.type !== "directive") {
@@ -54,7 +57,7 @@ const parse = (
       // Note: Restructured library does not provide accurate positions for
       // directive inner text nodes. It also doesn't provide access to blank lines
       // between the options list and the content body. So, separating the args,
-      // options and content is all more complicated than it would otherwise be
+      // options and content is all more complicated than it would otherwise be.
 
       // Extract args node if any
       if (node.children[0]?.position.start.line === node.position.start.line) {
@@ -63,75 +66,85 @@ const parse = (
         directiveNode.args = argsNode.value;
       }
 
-      // Reconstruct the directive body (including options and content) and remove
-      // the indentation to accurately distinguish between options and content
-      const bodyPosition = node.children[0]?.position;
-      if (bodyPosition === undefined) {
-        console.warn(
-          `Directive '${
-            directiveNode.directive
-          }' with no options or content at ${JSON.stringify(
-            directiveNode.position
-          )}`
-        );
+      if (node.children.length === 0) {
+        // No options or content (but might have argument)
         return;
       }
+
+      // Reconstruct the directive body (including options and content)
+      const bodyPosition = { ...node.children[0]?.position };
+
+      // Adjust body position if there was an args node
+      if (directiveNode.args !== undefined) {
+        --bodyPosition.start.offset; // Restore the \n we cut off
+      }
+
       const bodyRawText = rst.substring(
         bodyPosition.start.offset,
         bodyPosition.end.offset
       );
       const { indent } = node;
       assert(indent !== undefined);
-      const deindentedBodyLines = bodyRawText
-        .split("\n")
-        .map((line) => line.substring(indent?.offset ?? 0));
 
-      // Create a string to prepend to the inner document to be parsed. This will
-      // enable accurate reconstruction of positions on the inner document's nodes.
-      let optionSectionBlankout = "";
+      // Track the length of the option section for position adjustment later
+      let optionSectionLength = 0;
 
-      while (deindentedBodyLines.length > 0) {
-        if (deindentedBodyLines[0].trim() === "") {
+      const bodyLines = bodyRawText.split("\n");
+
+      while (bodyLines.length > 0) {
+        const topLine = bodyLines.shift() as string;
+        optionSectionLength += (topLine + "\n").length;
+        if (topLine.trim() === "") {
           // Blank line indicates end of options and start of content
-          optionSectionBlankout +=
-            (deindentedBodyLines.shift() as string) + "\n";
           break;
         }
         if (directiveNode.optionLines === undefined) {
           directiveNode.optionLines = [];
         }
-        const optionLine = deindentedBodyLines.shift() as string;
-        optionSectionBlankout += optionLine.replace(/./g, " ") + "\n";
-        directiveNode.optionLines.push(optionLine);
+        // Add deindented line to option lines
+        directiveNode.optionLines.push(topLine.substring(indent.width));
       }
 
-      // Remaining deindentedBodyLines are content lines
-      const parsedContent = parse(
-        optionSectionBlankout + deindentedBodyLines.join("\n"),
-        options
-      );
+      // Remaining body lines are content lines
+      const parsedContent = parse(bodyLines.join("\n"), {
+        ...options,
+        depth: depth + 1,
+      }).children[0]; // Skip down from top-level "document" to fake "block quote" node
+      // (because directive body is indented). Only the child nodes of
+      // parsedContent will be kept.
+
+      if (parsedContent === undefined) {
+        // Maybe options and args but no content
+        directiveNode.children = [];
+        return;
+      }
 
       // Adjust the inner parse job's positions relative to the parent rST document
       visit(parsedContent, (node) => {
+        if (node === parsedContent) {
+          // Skip the top-level node, as it will be discarded anyway
+          return;
+        }
         const { start, end } = node.position;
-        const { offset, line } = bodyPosition.start;
+
+        const newOffset =
+          start.offset + bodyPosition.start.offset + optionSectionLength;
+
         node.position = {
           start: {
             ...start,
-            offset: start.offset + offset + indent.offset,
-            line: start.line + line - 1,
+            offset: newOffset,
+            line: start.line + bodyPosition.start.line,
             column: start.column + indent.offset,
           },
           end: {
             ...end,
-            offset: end.offset + offset + indent.offset,
-            line: end.line + line - 1,
+            offset:
+              end.offset + bodyPosition.start.offset + optionSectionLength,
+            line: end.line + bodyPosition.start.line,
             column: end.column + indent.offset,
           },
         };
-        if (node.indent !== undefined) {
-          node.indent.offset += indent.offset;
-        }
       });
 
       directiveNode.children = parsedContent.children;

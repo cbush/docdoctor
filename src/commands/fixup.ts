@@ -3,26 +3,9 @@ import { promises as fs } from "fs";
 import restructured, { AnyNode } from "../restructured";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
-import toml from "toml";
 import { strict as assert } from "assert";
-
-type SnootyConfig = {
-  constants: Record<string, string>;
-};
-
-const loadSnootyConfig = async (
-  snootyTomlPath?: string
-): Promise<SnootyConfig> => {
-  const defaults: SnootyConfig = {
-    constants: {},
-  };
-  if (snootyTomlPath === undefined) {
-    return { ...defaults };
-  }
-  const text = await fs.readFile(snootyTomlPath, "utf8");
-  const data = toml.parse(text);
-  return { ...defaults, ...data } as SnootyConfig;
-};
+import { SnootyConfig, loadSnootyConfig } from "../loadSnootyConfig";
+import { replaceSourceConstants } from "../replaceSourceConstants";
 
 // https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
 // Note: = reused, but uses top title for first section depth
@@ -115,16 +98,6 @@ const fixTitles = (args: {
   });
 };
 
-const replaceSourceConstants = (
-  s: string,
-  constants: Record<string, string>
-): string => {
-  return Object.keys(constants).reduce(
-    (acc, cur) => acc.replace(`{+${cur}+}`, constants[cur]),
-    s
-  );
-};
-
 const fixup = async (args: {
   path: string;
   snootyConfig: SnootyConfig;
@@ -169,7 +142,7 @@ const commandModule: CommandModule<unknown, FixupArgs> = {
       const promises = paths.map((path) => fixup({ path, snootyConfig }));
       await Promise.all(promises);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       process.exit(1);
     }
   },
