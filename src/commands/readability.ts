@@ -50,13 +50,13 @@ const getText = (args: {
         desiredText.push(text + "\n");
         break;
       }
-      // TODO: Look into whether newlines in the paragraphs are inflating 
+      // TODO: Look into whether newlines in the paragraphs are inflating
       // readability scores to be artificially high.
       // If so, remove newlines in paragraphs and directives nodes.
       case "paragraph": {
         const textNodes = findAll(node, (n) => n.type === "text");
         const text = textNodes.map((textNode) => textNode.value).join("");
-        // Remove the <some-anchor-tag> markup that the rST parsing leaves 
+        // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
         desiredText.push(text.replace(unwantedText, ""));
@@ -67,7 +67,7 @@ const getText = (args: {
       case "directive": {
         const textNodes = findAll(node, (n) => n.type === "text");
         const text = textNodes.map((textNode) => textNode.value).join("");
-        // Remove the <some-anchor-tag> markup that the rST parsing leaves 
+        // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
         desiredText.push(text.replace(unwantedText, ""));
@@ -133,7 +133,7 @@ const commandModule: CommandModule<unknown, ReadableArgs> = {
       );
       await Promise.all(promises);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       process.exit(1);
     }
   },

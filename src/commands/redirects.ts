@@ -129,7 +129,7 @@ const commandModule: CommandModule<unknown, RedirectsArgs> = {
       const { path } = args;
       await redirects(path);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       process.exit(1);
     }
   },
