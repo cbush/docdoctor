@@ -1,7 +1,21 @@
-# typescript-cli-template
-Typescript CLI template
+# Docdoctor
 
-## Readability
+A tool for hacking rST
+
+## Build & Run
+
+Clone the repo, then:
+
+```sh
+cd docdoctor
+npm install
+npm run build
+node . --help
+```
+
+## Commands (Incomplete List)
+
+### Readability
 
 The `getReadabilityText` command takes file paths as arguments, delimited 
 by spaces. The last file path in the arguments should be the 
@@ -18,5 +32,5 @@ markup and things that would skew readability scores, such as code examples.
 It also adds punctuation to titles and makes other small tweaks to things
 that would otherwise falsely impact the readability score of the page text.
 
-### Todo
+## Todo
 - Currently does not handle any directives, such as info or procedure - just throws out all text in the steps.
