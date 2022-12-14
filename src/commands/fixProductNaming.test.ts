@@ -12,6 +12,11 @@ const productPhrases: ProductPhrases = [
     subsequent: "App Services UI",
   },
   {
+    search: "(Atlas )?App Services [Ff]unctions",
+    first: "Atlas Functions",
+    subsequent: "Functions",
+  },
+  {
     search: "(Atlas )?App Services [Ff]unction",
     first: "Atlas Function",
     subsequent: "Function",
