@@ -1,7 +1,6 @@
 import restructured, { AnyNode, ValueNode, ParentNode } from "restructured";
-import { visit } from "./tree";
+import { visit, findAll } from "./tree";
 import { strict as assert } from "assert";
-
 export type TextNode = ValueNode & {
   type: "text";
 };
@@ -12,6 +11,27 @@ export type DirectiveNode = ParentNode & {
   args?: string;
   optionLines?: string[];
 };
+
+export type InlineLinkNode = ParentNode & {
+  type: "interpreted_text";
+  role: "ref" | "doc";
+  target: string;
+};
+
+export type ReferenceNode = ParentNode & {
+  type: "reference";
+  target: string;
+};
+
+export type LabelNode = ParentNode & {
+  type: "label";
+  label: string;
+};
+
+export const getInnerText = (node: AnyNode): string =>
+  findAll(node, (node) => node.type === "text")
+    .map((node) => node.value)
+    .join("");
 
 // Wrapper that handles directives. WARNING: Line, columns, and indent may not
 // be 100% accurate.
@@ -152,6 +172,40 @@ const parse = (
       Object.assign(node, directiveNode);
     }
   );
+
+  // Assign 'target' to refroles and doclinks
+  findAll(
+    root,
+    (node) =>
+      node.type === "interpreted_text" &&
+      ["doc", "ref"].includes(node.role as string)
+  ).forEach((node) => {
+    const text = getInnerText(node);
+    const matches = /^.*<(.*)>\s*$/.exec(text);
+    // If no matches, then no title -- just ref label -- e.g. :ref:`some-label`
+    (node as InlineLinkNode).target = (matches && matches[1]) ?? text;
+  });
+
+  // Find labels
+  findAll(root, (node) => node.type === "comment").forEach((node) => {
+    const text = getInnerText(node);
+    const matches = /^_(.*):$/.exec(text);
+    if (matches === null) {
+      return;
+    }
+    node.type = "label";
+    node.label = matches[1];
+  });
+
+  // Find references (links)
+  findAll(root, (node) => node.type === "reference").forEach((node) => {
+    const text = getInnerText(node);
+    const matches = /^_(.*):$/.exec(text);
+    if (matches === null) {
+      return;
+    }
+    (node as ReferenceNode).target = (matches && matches[1]) ?? text;
+  });
 
   return root;
 };
