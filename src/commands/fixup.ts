@@ -12,12 +12,12 @@ import { replaceSourceConstants } from "../replaceSourceConstants";
 // See also "Inline Markup" slide: https://docs.google.com/presentation/d/125-MvuDr66EIUgb3bVWCX3Uh2Jj2MkM8kM0iM_JoOuA/edit#slide=id.g62b8cdf916_1_101
 const titleAdornmentCharacters = ["=", "-", "~", "`", "+", "_", "="];
 
-const fixTitles = (args: {
+export const fixTitles = (args: {
   path: string;
   document: MagicString;
   rst: AnyNode;
   snootyConfig: SnootyConfig;
-}) => {
+}): void => {
   const { path, rst, document, snootyConfig } = args;
   let sectionDepth = 1;
   visit(rst, (node) => {
@@ -31,13 +31,13 @@ const fixTitles = (args: {
         }
         break;
       case "title": {
-        const textNodes = findAll(node, (n) => n.type === "text");
-        if (textNodes.length < 1) {
+        const innerNodes = findAll(node, (node) => node.type !== "title");
+        if (innerNodes.length < 1) {
           throw new Error(
-            `In ${path}, not at least 1 text node found in title. Not sure how to handle that!`
+            `In ${path}, not at least 1 inner node found in title. Not sure how to handle that!`
           );
         }
-        const text = textNodes.map((textNode) => textNode.value).join("");
+        const text = innerNodes.map((node) => node.value).join("");
         if (/\n/.test(text)) {
           throw new Error(
             `In ${path}, found multiline title. Not sure how to handle that! Text: '${text}'`
@@ -47,11 +47,14 @@ const fixTitles = (args: {
         // Find the total length of the title by looking at the minimum start
         // and maximum end position of the inner text nodes. We'll then add the
         // length gained by source constant expansions.
-        const minStartOffset = textNodes.reduce((minStartOffset, textNode) => {
-          const { offset } = textNode.position.start;
-          return Math.min(offset, minStartOffset);
-        }, node.position.end.offset);
-        const maxEndOffset = textNodes.reduce((maxEndOffset, textNode) => {
+        const minStartOffset = node.children.reduce(
+          (minStartOffset, textNode) => {
+            const { offset } = textNode.position.start;
+            return Math.min(offset, minStartOffset);
+          },
+          node.position.end.offset
+        );
+        const maxEndOffset = node.children.reduce((maxEndOffset, textNode) => {
           const { offset } = textNode.position.end;
           return Math.max(offset, maxEndOffset);
         }, node.position.start.offset);
