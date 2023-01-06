@@ -74,100 +74,106 @@ const parse = (
         directive: node.directive as string,
       };
 
-      // Note: Restructured library does not provide accurate positions for
-      // directive inner text nodes. It also doesn't provide access to blank lines
-      // between the options list and the content body. So, separating the args,
-      // options and content is all more complicated than it would otherwise be.
+      // IIFE to ensure we can exit the next block early and still assign
+      // whatever result to the node object
+      (() => {
+        // Note: Restructured library does not provide accurate positions for
+        // directive inner text nodes. It also doesn't provide access to blank lines
+        // between the options list and the content body. So, separating the args,
+        // options and content is all more complicated than it would otherwise be.
 
-      // Extract args node if any
-      if (node.children[0]?.position.start.line === node.position.start.line) {
-        const argsNode = node.children.shift() as TextNode;
-        assert(argsNode.type === "text");
-        directiveNode.args = argsNode.value;
-      }
-
-      if (node.children.length === 0) {
-        // No options or content (but might have argument)
-        return;
-      }
-
-      // Reconstruct the directive body (including options and content)
-      const bodyPosition = { ...node.children[0]?.position };
-
-      // Adjust body position if there was an args node
-      if (directiveNode.args !== undefined) {
-        --bodyPosition.start.offset; // Restore the \n we cut off
-      }
-
-      const bodyRawText = rst.substring(
-        bodyPosition.start.offset,
-        bodyPosition.end.offset
-      );
-      const { indent } = node;
-      assert(indent !== undefined);
-
-      // Track the length of the option section for position adjustment later
-      let optionSectionLength = 0;
-
-      const bodyLines = bodyRawText.split("\n");
-
-      while (bodyLines.length > 0) {
-        const topLine = bodyLines.shift() as string;
-        optionSectionLength += (topLine + "\n").length;
-        if (topLine.trim() === "") {
-          // Blank line indicates end of options and start of content
-          break;
+        // Extract args node if any
+        if (
+          node.children[0]?.position.start.line === node.position.start.line
+        ) {
+          const argsNode = node.children.shift() as TextNode;
+          assert(argsNode.type === "text");
+          directiveNode.args = argsNode.value;
         }
-        if (directiveNode.optionLines === undefined) {
-          directiveNode.optionLines = [];
-        }
-        // Add deindented line to option lines
-        directiveNode.optionLines.push(topLine.substring(indent.width));
-      }
 
-      // Remaining body lines are content lines
-      const parsedContent = parse(bodyLines.join("\n"), {
-        ...options,
-        depth: depth + 1,
-      }).children[0]; // Skip down from top-level "document" to fake "block quote" node
-      // (because directive body is indented). Only the child nodes of
-      // parsedContent will be kept.
-
-      if (parsedContent === undefined) {
-        // Maybe options and args but no content
-        directiveNode.children = [];
-        return;
-      }
-
-      // Adjust the inner parse job's positions relative to the parent rST document
-      visit(parsedContent, (node) => {
-        if (node === parsedContent) {
-          // Skip the top-level node, as it will be discarded anyway
+        if (node.children.length === 0) {
+          // No options or content (but might have argument)
           return;
         }
-        const { start, end } = node.position;
 
-        const newOffset =
-          start.offset + bodyPosition.start.offset + optionSectionLength;
+        // Reconstruct the directive body (including options and content)
+        const bodyPosition = { ...node.children[0]?.position };
 
-        node.position = {
-          start: {
-            ...start,
-            offset: newOffset,
-            line: start.line + bodyPosition.start.line,
-            column: start.column + indent.offset,
-          },
-          end: {
-            ...end,
-            offset:
-              end.offset + bodyPosition.start.offset + optionSectionLength,
-            line: end.line + bodyPosition.start.line,
-            column: end.column + indent.offset,
-          },
-        };
-      });
+        // Adjust body position if there was an args node
+        if (directiveNode.args !== undefined) {
+          --bodyPosition.start.offset; // Restore the \n we cut off
+        }
 
-      directiveNode.children = parsedContent.children;
+        const bodyRawText = rst.substring(
+          bodyPosition.start.offset,
+          bodyPosition.end.offset
+        );
+        const { indent } = node;
+        assert(indent !== undefined);
+
+        // Track the length of the option section for position adjustment later
+        let optionSectionLength = 0;
+
+        const bodyLines = bodyRawText.split("\n");
+
+        while (bodyLines.length > 0) {
+          const topLine = bodyLines.shift() as string;
+          optionSectionLength += (topLine + "\n").length;
+          if (topLine.trim() === "") {
+            // Blank line indicates end of options and start of content
+            break;
+          }
+          if (directiveNode.optionLines === undefined) {
+            directiveNode.optionLines = [];
+          }
+          // Add deindented line to option lines
+          directiveNode.optionLines.push(topLine.substring(indent.width));
+        }
+
+        // Remaining body lines are content lines
+        const parsedContent = parse(bodyLines.join("\n"), {
+          ...options,
+          depth: depth + 1,
+        }).children[0]; // Skip down from top-level "document" to fake "block quote" node
+        // (because directive body is indented). Only the child nodes of
+        // parsedContent will be kept.
+
+        if (parsedContent === undefined) {
+          // Maybe options and args but no content
+          directiveNode.children = [];
+          return;
+        }
+
+        // Adjust the inner parse job's positions relative to the parent rST document
+        visit(parsedContent, (node) => {
+          if (node === parsedContent) {
+            // Skip the top-level node, as it will be discarded anyway
+            return;
+          }
+          const { start, end } = node.position;
+
+          const newOffset =
+            start.offset + bodyPosition.start.offset + optionSectionLength;
+
+          node.position = {
+            start: {
+              ...start,
+              offset: newOffset,
+              line: start.line + bodyPosition.start.line,
+              column: start.column + indent.offset,
+            },
+            end: {
+              ...end,
+              offset:
+                end.offset + bodyPosition.start.offset + optionSectionLength,
+              line: end.line + bodyPosition.start.line,
+              column: end.column + indent.offset,
+            },
+          };
+        });
+
+        directiveNode.children = parsedContent.children;
+      })();
 
       Object.assign(node, directiveNode);
     }
