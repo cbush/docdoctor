@@ -187,7 +187,7 @@ const parse = (
       ["doc", "ref"].includes(node.role as string)
   ).forEach((node) => {
     const text = getInnerText(node);
-    const matches = /^.*<(.*)>\s*$/.exec(text);
+    const matches = /^.*<(.*)>\s*$/m.exec(text);
     // If no matches, then no title -- just ref label -- e.g. :ref:`some-label`
     (node as InlineLinkNode).target = (matches && matches[1]) ?? text;
   });
@@ -206,7 +206,7 @@ const parse = (
   // Find references (links)
   findAll(root, (node) => node.type === "reference").forEach((node) => {
     const text = getInnerText(node);
-    const matches = /^_(.*):$/.exec(text);
+    const matches = /^.*<(.*)>\s*$/m.exec(text);
     if (matches === null) {
       return;
     }

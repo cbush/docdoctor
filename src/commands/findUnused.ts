@@ -14,15 +14,10 @@ import {
   getInnerText,
 } from "../restructured";
 
-const findRstFilesInDirectory = async (
-  path: string,
-  options?: { ignore?: string | string[] }
-) => glob(Path.join(path, "**/*+(.txt|.rst)"), options);
-
 class File {
   virtualPath: string;
   realPath: string;
-  rst: AnyNode;
+  rst?: AnyNode;
   scanned = false;
   connectionsIn = 0;
   private connections: Set<File> = new Set();
@@ -33,8 +28,8 @@ class File {
     realPath,
   }: {
     virtualPath: string;
-    rst: AnyNode;
     realPath: string;
+    rst?: AnyNode;
   }) {
     this.rst = rst;
     this.virtualPath = virtualPath;
@@ -79,25 +74,34 @@ class Graph {
   };
 
   private loadFiles = async (options?: GraphOptions): Promise<void> => {
-    const files = await findRstFilesInDirectory(this.basePath, options);
+    const files = await glob(Path.join(this.basePath, "**/**"), {
+      ...options,
+      nodir: true,
+    });
     await Promise.all(
       files.map(async (path) => {
-        const { rst } = await readRstFile(path);
         // Virtual path is the path from the root of the project with a leading
         // slash and .txt extension removed (if applicable).
         const virtualPath = Path.join(
           "/",
           Path.relative(this.basePath, path)
         ).replace(/\.txt$/, "");
-        const file = new File({ virtualPath, rst, realPath: path });
+        const file = new File({ virtualPath, realPath: path });
+
         // Populate path-to-file lookup
         this.pathToFile.set(virtualPath, file);
-        // Populate label-to-file lookup based on labels in the file
-        (findAll(rst, (node) => node.type === "label") as LabelNode[]).forEach(
-          ({ label }) => {
+
+        // Process rst files
+        if (/\.(txt|rst)$/.test(path)) {
+          const { rst } = await readRstFile(path);
+          // Populate label-to-file lookup based on labels in the file
+          (
+            findAll(rst, (node) => node.type === "label") as LabelNode[]
+          ).forEach(({ label }) => {
             this.labelsToFile.set(label, file);
-          }
-        );
+          });
+          file.rst = rst;
+        }
       })
     );
   };
@@ -110,6 +114,9 @@ class Graph {
     }
     file.scanned = true;
     const { rst } = file;
+    if (rst === undefined) {
+      return;
+    }
     visit(rst, (node) => {
       switch (node.type) {
         case "directive":
@@ -129,8 +136,14 @@ class Graph {
     switch (node.directive) {
       case "toctree":
         return this.handleToctree(node, file);
+      case "card":
+        return this.handleCard(node, file);
       case "include":
+      case "input":
+      case "output":
       case "literalinclude":
+      case "image":
+      case "figure":
         return this.handleInclude(node, file);
     }
   };
@@ -144,8 +157,24 @@ class Graph {
         if (matches === null) {
           return;
         }
-        this.connect(file, matches[1]);
+        // Toctree entries might have trailing .txt or /
+        const target = matches[1].replace(/\/$/, "").replace(/\.txt$/, "");
+        this.connect(file, target);
       });
+  };
+
+  private handleCard = (node: DirectiveNode, file: File) => {
+    const icon = node.optionLines?.reduce((result, line) => {
+      if (result !== undefined) {
+        return result;
+      }
+      const matches = /:icon: (.*)$/.exec(line);
+      return matches ? matches[1] : undefined;
+    }, undefined as string | undefined);
+    if (icon === undefined) {
+      return;
+    }
+    this.connect(file, icon);
   };
 
   private handleInclude = (node: DirectiveNode, file: File) => {
