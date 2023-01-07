@@ -73,7 +73,6 @@ const parse = (
         type: "directive",
         directive: node.directive as string,
       };
-
       // IIFE to ensure we can exit the next block early and still assign
       // whatever result to the node object
       (() => {
@@ -97,7 +96,10 @@ const parse = (
         }
 
         // Reconstruct the directive body (including options and content)
-        const bodyPosition = { ...node.children[0]?.position };
+        const bodyPosition = { ...node.children[0].position };
+        bodyPosition.end = {
+          ...node.children[node.children.length - 1].position.end,
+        };
 
         // Adjust body position if there was an args node
         if (directiveNode.args !== undefined) {
@@ -108,6 +110,7 @@ const parse = (
           bodyPosition.start.offset,
           bodyPosition.end.offset
         );
+
         const { indent } = node;
         assert(indent !== undefined);
 
@@ -115,7 +118,6 @@ const parse = (
         let optionSectionLength = 0;
 
         const bodyLines = bodyRawText.split("\n");
-
         while (bodyLines.length > 0) {
           const topLine = bodyLines.shift() as string;
           optionSectionLength += (topLine + "\n").length;
@@ -134,45 +136,53 @@ const parse = (
         const parsedContent = parse(bodyLines.join("\n"), {
           ...options,
           depth: depth + 1,
-        }).children[0]; // Skip down from top-level "document" to fake "block quote" node
+        }).children;
+        // Skip down from top-level "document" to fake "block quote" node
         // (because directive body is indented). Only the child nodes of
         // parsedContent will be kept.
 
-        if (parsedContent === undefined) {
+        if (!parsedContent || parsedContent.length === 0) {
           // Maybe options and args but no content
           directiveNode.children = [];
           return;
         }
 
         // Adjust the inner parse job's positions relative to the parent rST document
-        visit(parsedContent, (node) => {
-          if (node === parsedContent) {
-            // Skip the top-level node, as it will be discarded anyway
-            return;
-          }
-          const { start, end } = node.position;
+        const children = parsedContent
+          .map((parsedContent) => {
+            visit(parsedContent, (node) => {
+              if (node === parsedContent) {
+                // Skip the top-level node, as it will be discarded anyway
+                return;
+              }
+              const { start, end } = node.position;
 
-          const newOffset =
-            start.offset + bodyPosition.start.offset + optionSectionLength;
+              const newOffset =
+                start.offset + bodyPosition.start.offset + optionSectionLength;
 
-          node.position = {
-            start: {
-              ...start,
-              offset: newOffset,
-              line: start.line + bodyPosition.start.line,
-              column: start.column + indent.offset,
-            },
-            end: {
-              ...end,
-              offset:
-                end.offset + bodyPosition.start.offset + optionSectionLength,
-              line: end.line + bodyPosition.start.line,
-              column: end.column + indent.offset,
-            },
-          };
-        });
+              node.position = {
+                start: {
+                  ...start,
+                  offset: newOffset,
+                  line: start.line + bodyPosition.start.line,
+                  column: start.column + indent.offset,
+                },
+                end: {
+                  ...end,
+                  offset:
+                    end.offset +
+                    bodyPosition.start.offset +
+                    optionSectionLength,
+                  line: end.line + bodyPosition.start.line,
+                  column: end.column + indent.offset,
+                },
+              };
+            });
+            return parsedContent.children;
+          })
+          .flat(1);
 
-        directiveNode.children = parsedContent.children;
+        directiveNode.children = children;
       })();
 
       Object.assign(node, directiveNode);

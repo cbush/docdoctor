@@ -1,4 +1,5 @@
 import restructured from "./restructured";
+import { findAll } from "./tree";
 
 describe("restructured", () => {
   it("handles directives", () => {
@@ -449,6 +450,46 @@ describe("restructured", () => {
         },
       ],
     });
+  });
+
+  it("handles subdirective enumerated lists", () => {
+    const source = `
+
+.. procedure:: 
+
+   .. step:: Create a Realm File to Bundle
+
+      The easiest way to create a bundled realm for your React Native app is 
+      to write a separate Node.Js script to create the bundle. 
+
+      #. Build a temporary realm app that shares the data model of your
+         application.
+
+      #. Open a realm and add the data you wish to bundle. If using a
+         synchronized realm, allow time for the realm to fully sync.
+
+         .. literalinclude:: /examples/generated/rn/create-bundled-realm-rn.snippet.create-react-native-bundle.js
+            :language: javascript
+            :caption: create-bundled-realm.js
+
+      #. Note the filepath of the bundled realm file. You'll need this file to use
+         the bundled realm in your production application, as described in the next 
+         section.
+
+         .. code-block::
+            :caption: temp_realm_app
+            :emphasize-lines: 2
+
+            .
+            ├── bundle.realm
+            ... rest of files in _temp_ application
+
+      .. _react-native-bundle-realm-file:
+`;
+    const node = restructured.parse(source);
+    expect(
+      findAll(node, (node) => node.directive === "literalinclude").length
+    ).toBe(1);
   });
 
   it("handles inline bold", () => {
