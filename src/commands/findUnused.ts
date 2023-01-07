@@ -179,7 +179,6 @@ class Graph {
 
   private handleInclude = (node: DirectiveNode, file: File) => {
     const target = node.args;
-
     if (target === undefined) {
       return;
     }

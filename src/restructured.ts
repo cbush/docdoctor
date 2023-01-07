@@ -88,7 +88,7 @@ const parse = (
         ) {
           const argsNode = node.children.shift() as TextNode;
           assert(argsNode.type === "text");
-          directiveNode.args = argsNode.value;
+          directiveNode.args = argsNode.value.trim();
         }
 
         if (node.children.length === 0) {
