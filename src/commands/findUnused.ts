@@ -99,10 +99,9 @@ class Graph {
       files.map(async (path) => {
         // Virtual path is the path from the root of the project with a leading
         // slash and .txt extension removed (if applicable).
-        const virtualPath = Path.join(
-          "/",
-          Path.relative(this.basePath, path)
-        ).replace(/\.txt$/, "");
+        const virtualPath = Path.join("/", Path.relative(this.basePath, path))
+          .replace(/\.txt$/, "")
+          .toLowerCase();
 
         const stat = await fs.stat(path);
         if (stat.isDirectory()) {
@@ -122,7 +121,8 @@ class Graph {
         }
 
         const isDirectoryIndexFile =
-          /.txt$/.test(path) && directories.has(virtualPath);
+          /\/index.txt$/.test(path) ||
+          (/.txt$/.test(path) && directories.has(virtualPath));
 
         const file = new File({
           virtualPath,
@@ -205,6 +205,7 @@ class Graph {
         }
         // Toctree entries might have trailing .txt or /
         const target = matches[1].replace(/\/$/, "").replace(/\.txt$/, "");
+
         this.connect(file, target);
       });
   };
@@ -243,9 +244,10 @@ class Graph {
 
   private connect(
     file: File,
-    target: string,
+    targetIn: string,
     map: Map<string, File> = this.pathToFile
   ) {
+    const target = targetIn.toLowerCase();
     const targetFile = map.get(target);
     if (!targetFile) {
       return;
