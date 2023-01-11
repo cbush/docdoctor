@@ -97,6 +97,12 @@ class Graph {
     const directories: Set<string> = new Set();
     await Promise.all(
       files.map(async (path) => {
+        // TODO: Handle extracts. Snooty makes an `extracts-xyz.yaml` file
+        // available as `extracts/xyz-something.rst`. For now, just leave them alone.
+        if (/\/extracts-.*\.ya?ml$/.test(path)) {
+          return;
+        }
+
         // Virtual path is the path from the root of the project with a leading
         // slash and .txt extension removed (if applicable).
         const virtualPath = Path.join("/", Path.relative(this.basePath, path))
@@ -167,8 +173,6 @@ class Graph {
       switch (node.type) {
         case "directive":
           return this.handleDirective(node as DirectiveNode, file);
-        case "reference":
-          return this.handleReference(node as ReferenceNode, file);
         case "interpreted_text":
           if (["ref", "doc"].includes(node.role as string)) {
             return this.handleInlineLink(node as InlineLinkNode, file);
@@ -190,6 +194,8 @@ class Graph {
       case "literalinclude":
       case "image":
       case "figure":
+      case "openapi":
+        // Direct argument = virtual path to file
         return this.handleInclude(node, file);
     }
   };
@@ -231,10 +237,6 @@ class Graph {
     }
 
     this.connect(file, target);
-  };
-
-  private handleReference = (node: ReferenceNode, file: File) => {
-    //
   };
 
   private handleInlineLink = (node: InlineLinkNode, file: File) => {
