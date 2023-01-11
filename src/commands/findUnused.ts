@@ -1,5 +1,6 @@
 import { CommandModule } from "yargs";
 import { SnootyConfig, loadSnootyConfig } from "../loadSnootyConfig";
+import { promises as fs } from "fs";
 import * as Path from "path";
 import { glob } from "../glob";
 import { strict as assert } from "assert";
@@ -19,21 +20,29 @@ class File {
   realPath: string;
   rst?: AnyNode;
   scanned = false;
-  connectionsIn = 0;
+
+  // This .txt file is an index/TOC file for a directory. Count this as a
+  // reference.
+  private isDirectoryIndexFile = false;
+
+  private connectionsIn = 0;
   private connections: Set<File> = new Set();
 
   constructor({
     rst,
     virtualPath,
     realPath,
+    isDirectoryIndexFile,
   }: {
     virtualPath: string;
     realPath: string;
     rst?: AnyNode;
+    isDirectoryIndexFile: boolean;
   }) {
     this.rst = rst;
     this.virtualPath = virtualPath;
     this.realPath = realPath;
+    this.isDirectoryIndexFile = isDirectoryIndexFile;
   }
 
   connect = (file: File) => {
@@ -43,6 +52,10 @@ class File {
       ++file.connectionsIn;
     }
   };
+
+  get referenceCount(): number {
+    return this.connectionsIn + (this.isDirectoryIndexFile ? 1 : 0);
+  }
 }
 
 type GraphOptions = { ignore?: string | string[] };
@@ -52,6 +65,7 @@ class Graph {
   labelsToFile: Map<string, File> = new Map();
   basePath: string;
   rootFile?: File;
+  indexFiles: File[] = [];
 
   private scanQueue: string[] = [];
 
@@ -62,7 +76,10 @@ class Graph {
   scan = async (entrypointPath: string, options?: GraphOptions) => {
     await this.loadFiles(options);
     const virtualEntry = Path.join("/", entrypointPath).replace(/\.txt$/, "");
-    this.scanQueue.push(virtualEntry);
+    this.scanQueue.push(
+      virtualEntry,
+      ...this.indexFiles.map(({ virtualPath }) => virtualPath)
+    );
     for (
       let path = this.scanQueue.shift();
       path !== undefined;
@@ -76,8 +93,8 @@ class Graph {
   private loadFiles = async (options?: GraphOptions): Promise<void> => {
     const files = await glob(Path.join(this.basePath, "**/**"), {
       ...options,
-      nodir: true,
     });
+    const directories: Set<string> = new Set();
     await Promise.all(
       files.map(async (path) => {
         // Virtual path is the path from the root of the project with a leading
@@ -86,7 +103,36 @@ class Graph {
           "/",
           Path.relative(this.basePath, path)
         ).replace(/\.txt$/, "");
-        const file = new File({ virtualPath, realPath: path });
+
+        const stat = await fs.stat(path);
+        if (stat.isDirectory()) {
+          // Keep track of directories, because we need to count them as
+          // references to the corresponding index file (e.g. "sdk.txt" is the
+          // index file/landing page for "sdk/")
+          directories.add(virtualPath);
+          return;
+        }
+
+        if (this.pathToFile.has(virtualPath)) {
+          throw new Error(
+            `Virtual path collision: ${virtualPath} (from '${path}' and '${
+              this.pathToFile.get(virtualPath)?.realPath
+            }')`
+          );
+        }
+
+        const isDirectoryIndexFile =
+          /.txt$/.test(path) && directories.has(virtualPath);
+
+        const file = new File({
+          virtualPath,
+          realPath: path,
+          isDirectoryIndexFile,
+        });
+
+        if (isDirectoryIndexFile) {
+          this.indexFiles.push(file);
+        }
 
         // Populate path-to-file lookup
         this.pathToFile.set(virtualPath, file);
@@ -223,7 +269,7 @@ export const findUnused = async ({
   await graph.scan(entryPointPath, { ignore });
   const rootFile = graph.rootFile;
   const unusedFilePaths = Array.from(graph.pathToFile.values())
-    .filter((file) => file !== rootFile && file.connectionsIn === 0)
+    .filter((file) => file !== rootFile && file.referenceCount === 0)
     .map(({ realPath }) => realPath);
   unusedFilePaths.forEach((v) => console.log(v));
 };
