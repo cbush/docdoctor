@@ -1,0 +1,29 @@
+---
+name: Find Unused Files
+author: MongoDB Realm Docs Team
+description: Find unused files in a snooty source directory.
+branding:
+  icon: trash-2
+  color: green
+inputs:
+  source:
+    description: "The path to the source directory."
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        DOCDOCTOR_DIR="${{ github.action_path }}"/../..
+        pushd "$DOCDOCTOR_DIR"
+        npm ci
+        npm run build
+        popd
+        RESULT=`node "$DOCDOCTOR_DIR" findUnused "${{ inputs.source }}"`
+        if [[ -z "$RESULT" ]]; then
+          echo "No unused files found."
+          exit 0
+        else
+          echo $RESULT
+          exit 1
+        fi
