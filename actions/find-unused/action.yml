@@ -24,6 +24,13 @@ runs:
           echo "No unused files found."
           exit 0
         else
+          echo "Unused files found:"
           echo $RESULT
+          echo
+          echo 'Possible remediations:'
+          echo '- Delete the unused file.'
+          echo '- Add the file to a toctree.'
+          echo '- If the file is intentionally orphaned from a toctree, rename it index.txt and move it into a new directory with the desired page name. (e.g. deliberate-orphan.txt -> deliberate-orphan/index.txt)'
+          echo '- If the file is not actually part of the site (such as a source file used to generate an image), move it out of the ${{ inputs.source }} directory.'
           exit 1
         fi
