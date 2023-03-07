@@ -418,62 +418,177 @@ describe("restructured", () => {
             incoming queries on the collection.
 `;
     const nodeNoOptions = restructured.parse(sourceNoOptions);
-    expect(nodeNoOptions).toMatchObject({
-      type: "document",
+    expect(nodeNoOptions).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "tabs-realm-admin-interfaces",
           children: [
             {
-              type: "directive",
-              directive: "tab",
               children: [
                 {
-                  type: "directive",
-                  directive: "procedure",
                   children: [
                     {
-                      type: "directive",
-                      directive: "step",
                       children: [
                         {
-                          type: "paragraph",
                           children: [
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 10,
+                                  offset: 196,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 9,
+                                  offset: 110,
+                                },
+                              },
                               type: "text",
                               value:
                                 "After you have configured the Filter Query and the Apply When expression, click Save.\n",
-                              position: {
-                                start: { offset: 110 },
-                              },
                             },
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 11,
+                                  offset: 295,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 10,
+                                  offset: 208,
+                                },
+                              },
                               type: "text",
                               value:
                                 "After saving, Atlas App Services immediately begins evaluating and applying filters to\n",
-                              position: {
-                                start: { offset: 208 },
-                              },
                             },
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 12,
+                                  offset: 343,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 11,
+                                  offset: 307,
+                                },
+                              },
                               type: "text",
                               value: "incoming queries on the collection.\n",
-                              position: {
-                                start: { offset: 307 },
-                              },
                             },
                           ],
+                          position: {
+                            end: {
+                              column: 13,
+                              line: 12,
+                              offset: 343,
+                            },
+                            start: {
+                              column: 13,
+                              line: 9,
+                              offset: 98,
+                            },
+                          },
+                          type: "paragraph",
                         },
                       ],
+                      directive: "step",
+                      indent: {
+                        offset: 3,
+                        width: 12,
+                      },
+                      position: {
+                        end: {
+                          column: 10,
+                          line: 12,
+                          offset: 343,
+                        },
+                        start: {
+                          column: 10,
+                          line: 7,
+                          offset: 78,
+                        },
+                      },
+                      type: "directive",
                     },
                   ],
+                  directive: "procedure",
+                  indent: {
+                    offset: 3,
+                    width: 9,
+                  },
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 12,
+                      offset: 343,
+                    },
+                    start: {
+                      column: 7,
+                      line: 5,
+                      offset: 56,
+                    },
+                  },
+                  type: "directive",
                 },
               ],
+              directive: "tab",
+              indent: {
+                offset: 3,
+                width: 6,
+              },
+              position: {
+                end: {
+                  column: 4,
+                  line: 12,
+                  offset: 343,
+                },
+                start: {
+                  column: 4,
+                  line: 3,
+                  offset: 37,
+                },
+              },
+              type: "directive",
             },
           ],
+          directive: "tabs-realm-admin-interfaces",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          position: {
+            end: {
+              column: 1,
+              line: 12,
+              offset: 343,
+            },
+            start: {
+              column: 1,
+              line: 1,
+              offset: 0,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 12,
+          offset: 343,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
 
     const source = `.. tabs-realm-admin-interfaces::
@@ -490,62 +605,116 @@ describe("restructured", () => {
             incoming queries on the collection.
 `;
     const node = restructured.parse(source);
-    expect(node).toMatchObject({
-      type: "document",
+    expect(node).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "tabs-realm-admin-interfaces",
           children: [
             {
-              type: "directive",
-              directive: "tab",
               children: [
                 {
-                  type: "directive",
-                  directive: "procedure",
                   children: [
                     {
-                      type: "directive",
+                      args: "Save the Filter",
+                      children: [],
                       directive: "step",
-                      children: [
-                        {
-                          type: "paragraph",
-                          children: [
-                            {
-                              type: "text",
-                              value:
-                                "After you have configured the Filter Query and the Apply When expression, click Save.\n",
-                              position: {
-                                start: { offset: 143 },
-                              },
-                            },
-                            {
-                              type: "text",
-                              value:
-                                "After saving, Atlas App Services immediately begins evaluating and applying filters to\n",
-                              position: {
-                                start: { offset: 241 },
-                              },
-                            },
-                            {
-                              type: "text",
-                              value: "incoming queries on the collection.\n",
-                              position: {
-                                start: { offset: 340 },
-                              },
-                            },
-                          ],
-                        },
+                      indent: {
+                        offset: 3,
+                        width: 12,
+                      },
+                      optionLines: [
+                        "After you have configured the Filter Query and the Apply When expression, click Save.",
+                        "After saving, Atlas App Services immediately begins evaluating and applying filters to",
+                        "incoming queries on the collection.",
                       ],
+                      position: {
+                        end: {
+                          column: 10,
+                          line: 12,
+                          offset: 376,
+                        },
+                        start: {
+                          column: 10,
+                          line: 7,
+                          offset: 95,
+                        },
+                      },
+                      type: "directive",
                     },
                   ],
+                  directive: "procedure",
+                  indent: {
+                    offset: 3,
+                    width: 9,
+                  },
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 12,
+                      offset: 376,
+                    },
+                    start: {
+                      column: 7,
+                      line: 5,
+                      offset: 73,
+                    },
+                  },
+                  type: "directive",
                 },
               ],
+              directive: "tab",
+              indent: {
+                offset: 3,
+                width: 6,
+              },
+              optionLines: [":tabid: ui"],
+              position: {
+                end: {
+                  column: 4,
+                  line: 13,
+                  offset: 376,
+                },
+                start: {
+                  column: 4,
+                  line: 3,
+                  offset: 37,
+                },
+              },
+              type: "directive",
             },
           ],
+          directive: "tabs-realm-admin-interfaces",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          position: {
+            end: {
+              column: 1,
+              line: 13,
+              offset: 376,
+            },
+            start: {
+              column: 1,
+              line: 1,
+              offset: 0,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 13,
+          offset: 376,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
   });
 
@@ -587,21 +756,6 @@ describe("restructured", () => {
     expect(
       findAll(node, (node) => node.directive === "literalinclude").length
     ).toBe(1);
-  });
-
-  it("handles weird options case", () => {
-    const source = `.. contents::
-   :local:
-   :backlinks: none
-   :depth: 2
-   :class: singlecol
-
-   Here's some text.
-
-`;
-    const node = restructured.parse(source);
-    expect(node.optionLines).toBeDefined();
-    expect(node).toStrictEqual({});
   });
 
   it("handles inline bold", () => {
