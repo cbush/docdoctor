@@ -1,6 +1,6 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
-import restructured, { AnyNode } from "../restructured";
+import restructured, { AnyNode, DirectiveNode } from "../restructured";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
 import toml from "toml";
@@ -42,7 +42,7 @@ const getText = (args: {
         const textNodes = findAll(node, (n) => n.type === "text");
         let text = textNodes.map((textNode) => textNode.value).join("");
         // If the last character of the title is not a period, add one.
-        // Missing periods will negatively impact readability.
+        // Missing periods negatively impact readability.
         const lastTitleChar = text.charAt(text.length - 1);
         if (lastTitleChar != ".") {
           text = text + ".";
@@ -50,27 +50,43 @@ const getText = (args: {
         desiredText.push(text + "\n");
         break;
       }
-      // TODO: Look into whether newlines in the paragraphs are inflating
-      // readability scores to be artificially high.
-      // If so, remove newlines in paragraphs and directives nodes.
       case "paragraph": {
         const textNodes = findAll(node, (n) => n.type === "text");
-        const text = textNodes.map((textNode) => textNode.value).join("");
+        let text = textNodes.map((textNode) => textNode.value).join("");
         // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
         desiredText.push(text.replace(unwantedText, ""));
+        // In the case of bullet items, we want a period to avoid skewing
+        // readability. Add a period to the end of a paragraph if there
+        // isn't one.
+        // TODO: This doesn't currently work - figure out how to fix it!
+        const lastParagraphChar = text.charAt(text.length - 1);
+        if (lastParagraphChar != ".") {
+          text = text + ".";
+        }
         break;
       }
       // TODO: Clean up directive output. Check for tables, code blocks,
       // and other unwanted elements that will skew readability scores.
       case "directive": {
+        const directiveNode = node as DirectiveNode;
+        directiveNode.children.slice(directiveNode.optionLines?.length ?? 0);
+        if (directiveNode.directive === "contents") {
+          console.log(JSON.stringify(directiveNode));
+        }
+        //console.log(directiveNode.optionLines?.length);
         const textNodes = findAll(node, (n) => n.type === "text");
         const text = textNodes.map((textNode) => textNode.value).join("");
         // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
-        const unwantedText = new RegExp("<.*?>");
-        desiredText.push(text.replace(unwantedText, ""));
+        const refText = new RegExp("<.*?>");
+        desiredText.push(text.replace(refText, ""));
+        // If the node in the directive is an option, remove it.
+        // This doesn't currently work - fix it.
+        const rstOption = new RegExp("local");
+        const rstOptionPattern = /^:\S+:/;
+        desiredText.push(text.replace(rstOption, ""));
         break;
       }
     }

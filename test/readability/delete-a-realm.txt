@@ -26,6 +26,7 @@ deallocation of these objects:
 - The realm itself
 
 .. warning:: Don't delete files while realms are open
+   :option: Here is an option
 
    If you delete a realm file or any of its auxiliary files while one or
    more instances of the realm are open, you might corrupt the realm or

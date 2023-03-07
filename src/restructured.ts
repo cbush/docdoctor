@@ -118,11 +118,18 @@ const parse = (
         let optionSectionLength = 0;
 
         const bodyLines = bodyRawText.split("\n");
+        let triedOnce = false;
+
         while (bodyLines.length > 0) {
           const topLine = bodyLines.shift() as string;
           optionSectionLength += (topLine + "\n").length;
           if (topLine.trim() === "") {
             // Blank line indicates end of options and start of content
+            if (directiveNode.args !== undefined && !triedOnce) {
+              triedOnce = true;
+              optionSectionLength -= (topLine + "\n").length;
+              continue;
+            }
             break;
           }
           if (directiveNode.optionLines === undefined) {
