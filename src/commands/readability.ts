@@ -6,11 +6,11 @@ import { findAll, visit } from "../tree";
 import toml from "toml";
 import * as path from "path";
 
-type SnootyConfig = {
+export type SnootyConfig = {
   constants: Record<string, string>;
 };
 
-const loadSnootyConfig = async (
+export const loadSnootyConfig = async (
   snootyTomlPath?: string
 ): Promise<SnootyConfig> => {
   const defaults: SnootyConfig = {
@@ -24,17 +24,12 @@ const loadSnootyConfig = async (
   return { ...defaults, ...data } as SnootyConfig;
 };
 
-// https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
-// Note: = reused, but uses top title for first section depth
-const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
-
-const getText = (args: {
+export const getText = (args: {
   inputPath: string;
   document: MagicString;
   rst: AnyNode;
-  snootyConfig: SnootyConfig;
-}) => {
-  const { inputPath, rst, snootyConfig } = args;
+}): string[] => {
+  const { inputPath, rst } = args;
   const desiredText: string[] = [];
   visit(rst, (node) => {
     switch (node.type) {
@@ -56,37 +51,34 @@ const getText = (args: {
         // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
-        desiredText.push(text.replace(unwantedText, ""));
+        text = text.replace(unwantedText, "");
         // In the case of bullet items, we want a period to avoid skewing
         // readability. Add a period to the end of a paragraph if there
         // isn't one.
-        // TODO: This doesn't currently work - figure out how to fix it!
-        const lastParagraphChar = text.charAt(text.length - 1);
-        if (lastParagraphChar != ".") {
-          text = text + ".";
+        // The character to check has to be at index -2 because index -1 is a newline
+        const penultimateParagraphChar = text.charAt(text.length - 2);
+        const lastCharacter = text.charAt(text.length - 1);
+        const acceptibleLastChar = [".", "!", "?", ":"];
+        if (!acceptibleLastChar.includes(penultimateParagraphChar)) {
+          text = text.replace(lastCharacter, ".\n");
         }
+        desiredText.push(text);
         break;
       }
       // TODO: Clean up directive output. Check for tables, code blocks,
       // and other unwanted elements that will skew readability scores.
       case "directive": {
         const directiveNode = node as DirectiveNode;
+        // If the node in the directive is an option, remove it.
         directiveNode.children.slice(directiveNode.optionLines?.length ?? 0);
         if (directiveNode.directive === "contents") {
           console.log(JSON.stringify(directiveNode));
         }
         //console.log(directiveNode.optionLines?.length);
-        const textNodes = findAll(node, (n) => n.type === "text");
-        const text = textNodes.map((textNode) => textNode.value).join("");
-        // Remove the <some-anchor-tag> markup that the rST parsing leaves
-        // in the plain text, as this skews readability.
-        const refText = new RegExp("<.*?>");
-        desiredText.push(text.replace(refText, ""));
-        // If the node in the directive is an option, remove it.
-        // This doesn't currently work - fix it.
-        const rstOption = new RegExp("local");
-        const rstOptionPattern = /^:\S+:/;
-        desiredText.push(text.replace(rstOption, ""));
+        // TODO: do things with directive nodes that aren't options.
+        // Need to figure out how to get access to the contents of directiveNode
+        // children that are not options. I want the text in directive nodes for
+        // readability scoring.
         break;
       }
     }
@@ -123,7 +115,6 @@ const getReadabilityText = async (args: {
     inputPath,
     document,
     rst,
-    snootyConfig,
   });
   console.log(`Creating ${outputPath}`);
   console.log(`Output directory: ${outputDir}`);
