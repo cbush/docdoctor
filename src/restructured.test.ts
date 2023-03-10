@@ -11,76 +11,95 @@ describe("restructured", () => {
    test 1
    test 2
 `);
-    expect(node).toMatchObject({
-      type: "document",
-      position: {
-        start: { offset: 0, line: 1, column: 1 },
-        end: { offset: 93, line: 8, column: 1 },
-      },
+    expect(node).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "somedirective",
-          position: {
-            start: { offset: 1, line: 2, column: 1 },
-            end: { offset: 93, line: 8, column: 1 },
-          },
-          indent: { width: 3, offset: 3 },
+          args: "foo",
           children: [
             {
-              type: "paragraph",
-              position: {
-                start: { offset: 24, line: 4, column: 4 },
-                end: { offset: 72, line: 6, column: 4 },
-              },
               children: [
                 {
-                  type: "text",
-                  value: ":option1: someoption\n",
                   position: {
-                    start: { offset: 27, line: 4, column: 7 },
-                    end: { offset: 48, line: 5, column: 4 },
+                    end: {
+                      column: 4,
+                      line: 5,
+                      offset: 82,
+                    },
+                    start: {
+                      column: 7,
+                      line: 4,
+                      offset: 75,
+                    },
                   },
-                },
-                {
-                  type: "text",
-                  value: ":option2: someoption\n",
-                  position: {
-                    start: { offset: 51, line: 5, column: 7 },
-                    end: { offset: 72, line: 6, column: 4 },
-                  },
-                },
-              ],
-            },
-            {
-              type: "paragraph",
-              position: {
-                start: { offset: 73, line: 7, column: 4 },
-                end: { offset: 93, line: 9, column: 4 },
-              },
-              children: [
-                {
                   type: "text",
                   value: "test 1\n",
-                  position: {
-                    start: { offset: 76, line: 7, column: 7 },
-                    end: { offset: 83, line: 8, column: 4 },
-                  },
                 },
                 {
+                  position: {
+                    end: {
+                      column: 4,
+                      line: 6,
+                      offset: 92,
+                    },
+                    start: {
+                      column: 7,
+                      line: 5,
+                      offset: 85,
+                    },
+                  },
                   type: "text",
                   value: "test 2\n",
-                  position: {
-                    start: { offset: 86, line: 8, column: 7 },
-                    end: { offset: 93, line: 9, column: 4 },
-                  },
                 },
               ],
+              position: {
+                end: {
+                  column: 4,
+                  line: 6,
+                  offset: 92,
+                },
+                start: {
+                  column: 4,
+                  line: 4,
+                  offset: 72,
+                },
+              },
+              type: "paragraph",
             },
           ],
-          args: "foo",
+          directive: "somedirective",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          optionLines: [":option1: someoption", ":option2: someoption"],
+          position: {
+            end: {
+              column: 1,
+              line: 8,
+              offset: 93,
+            },
+            start: {
+              column: 1,
+              line: 2,
+              offset: 1,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 8,
+          offset: 93,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
 
     const node2 = restructured.parse(`
@@ -102,147 +121,225 @@ describe("restructured", () => {
 
    test 2
 `);
-    expect(node2).toMatchObject({
-      type: "document",
+    expect(node2).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "somedirective",
-          position: {
-            start: { offset: 1, line: 2, column: 1 },
-            end: { offset: 268, line: 19, column: 1 },
-          },
+          args: "foo",
           children: [
             {
-              type: "paragraph",
-              position: {
-                start: { offset: 24, line: 4, column: 4 },
-                end: { offset: 48, line: 5, column: 4 },
-              },
               children: [
                 {
-                  type: "text",
-                  value: ":option1: someoption\n",
                   position: {
-                    start: { offset: 27, line: 4, column: 7 },
-                    end: { offset: 48, line: 5, column: 4 },
+                    end: {
+                      column: 4,
+                      line: 5,
+                      offset: 56,
+                    },
+                    start: {
+                      column: 7,
+                      line: 4,
+                      offset: 51,
+                    },
                   },
-                },
-              ],
-            },
-            {
-              type: "paragraph",
-              position: {
-                start: { offset: 49, line: 6, column: 4 },
-                end: { offset: 57, line: 7, column: 4 },
-              },
-              children: [
-                {
                   type: "text",
                   value: "test\n",
-                  position: {
-                    start: { offset: 52, line: 6, column: 7 },
-                    end: { offset: 57, line: 7, column: 4 },
-                  },
                 },
               ],
+              position: {
+                end: {
+                  column: 4,
+                  line: 5,
+                  offset: 56,
+                },
+                start: {
+                  column: 4,
+                  line: 4,
+                  offset: 48,
+                },
+              },
+              type: "paragraph",
             },
             {
-              type: "directive",
-              directive: "someotherdirective",
-              position: {
-                start: { offset: 58, line: 8, column: 4 },
-                end: { offset: 258, line: 19, column: 4 },
-              },
-              indent: { width: 6, offset: 3 },
+              args: "foo bar baz",
               children: [
                 {
-                  type: "paragraph",
-                  position: {
-                    start: { offset: 97, line: 10, column: 7 },
-                    end: { offset: 124, line: 11, column: 7 },
-                  },
                   children: [
                     {
-                      type: "text",
-                      value: ":option1: someoption\n",
                       position: {
-                        start: { offset: 103, line: 10, column: 13 },
-                        end: { offset: 124, line: 11, column: 7 },
+                        end: {
+                          column: 7,
+                          line: 9,
+                          offset: 150,
+                        },
+                        start: {
+                          column: 13,
+                          line: 8,
+                          offset: 129,
+                        },
                       },
-                    },
-                  ],
-                },
-                {
-                  type: "paragraph",
-                  position: {
-                    start: { offset: 125, line: 12, column: 7 },
-                    end: { offset: 152, line: 13, column: 7 },
-                  },
-                  children: [
-                    {
                       type: "text",
                       value: "inner directive test\n",
-                      position: {
-                        start: { offset: 131, line: 12, column: 13 },
-                        end: { offset: 152, line: 13, column: 7 },
-                      },
                     },
                   ],
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 9,
+                      offset: 150,
+                    },
+                    start: {
+                      column: 7,
+                      line: 8,
+                      offset: 123,
+                    },
+                  },
+                  type: "paragraph",
                 },
                 {
-                  type: "directive",
-                  directive: "yetanotherdirective",
-                  position: {
-                    start: { offset: 153, line: 14, column: 7 },
-                    end: { offset: 258, line: 20, column: 7 },
-                  },
-                  indent: { width: 9, offset: 3 },
                   children: [
                     {
-                      type: "paragraph",
-                      position: {
-                        start: { offset: 231, line: 16, column: 10 },
-                        end: { offset: 257, line: 17, column: 10 },
-                      },
                       children: [
                         {
+                          position: {
+                            end: {
+                              column: 10,
+                              line: 13,
+                              offset: 255,
+                            },
+                            start: {
+                              column: 19,
+                              line: 12,
+                              offset: 238,
+                            },
+                          },
                           type: "text",
                           value: "inner inner test\n",
-                          position: {
-                            start: { offset: 240, line: 16, column: 19 },
-                            end: { offset: 257, line: 17, column: 10 },
-                          },
                         },
                       ],
+                      position: {
+                        end: {
+                          column: 10,
+                          line: 13,
+                          offset: 255,
+                        },
+                        start: {
+                          column: 10,
+                          line: 12,
+                          offset: 229,
+                        },
+                      },
+                      type: "paragraph",
                     },
                   ],
+                  directive: "yetanotherdirective",
+                  indent: {
+                    offset: 3,
+                    width: 9,
+                  },
                   optionLines: [":option1: foo", ":option2: bar"],
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 16,
+                      offset: 256,
+                    },
+                    start: {
+                      column: 7,
+                      line: 10,
+                      offset: 151,
+                    },
+                  },
+                  type: "directive",
                 },
               ],
-              args: "foo bar baz",
+              directive: "someotherdirective",
+              indent: {
+                offset: 3,
+                width: 6,
+              },
+              optionLines: [":option1: someoption"],
+              position: {
+                end: {
+                  column: 4,
+                  line: 17,
+                  offset: 257,
+                },
+                start: {
+                  column: 4,
+                  line: 6,
+                  offset: 57,
+                },
+              },
+              type: "directive",
             },
             {
-              type: "paragraph",
-              position: {
-                start: { offset: 258, line: 19, column: 4 },
-                end: { offset: 268, line: 20, column: 4 },
-              },
               children: [
                 {
+                  position: {
+                    end: {
+                      column: 4,
+                      line: 18,
+                      offset: 267,
+                    },
+                    start: {
+                      column: 7,
+                      line: 17,
+                      offset: 260,
+                    },
+                  },
                   type: "text",
                   value: "test 2\n",
-                  position: {
-                    start: { offset: 261, line: 19, column: 7 },
-                    end: { offset: 268, line: 20, column: 4 },
-                  },
                 },
               ],
+              position: {
+                end: {
+                  column: 4,
+                  line: 18,
+                  offset: 267,
+                },
+                start: {
+                  column: 4,
+                  line: 17,
+                  offset: 257,
+                },
+              },
+              type: "paragraph",
             },
           ],
-          args: "foo",
+          directive: "somedirective",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          optionLines: [":option1: someoption"],
+          position: {
+            end: {
+              column: 1,
+              line: 19,
+              offset: 268,
+            },
+            start: {
+              column: 1,
+              line: 2,
+              offset: 1,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 19,
+          offset: 268,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
   });
 
@@ -321,62 +418,177 @@ describe("restructured", () => {
             incoming queries on the collection.
 `;
     const nodeNoOptions = restructured.parse(sourceNoOptions);
-    expect(nodeNoOptions).toMatchObject({
-      type: "document",
+    expect(nodeNoOptions).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "tabs-realm-admin-interfaces",
           children: [
             {
-              type: "directive",
-              directive: "tab",
               children: [
                 {
-                  type: "directive",
-                  directive: "procedure",
                   children: [
                     {
-                      type: "directive",
-                      directive: "step",
                       children: [
                         {
-                          type: "paragraph",
                           children: [
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 10,
+                                  offset: 196,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 9,
+                                  offset: 110,
+                                },
+                              },
                               type: "text",
                               value:
                                 "After you have configured the Filter Query and the Apply When expression, click Save.\n",
-                              position: {
-                                start: { offset: 110 },
-                              },
                             },
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 11,
+                                  offset: 295,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 10,
+                                  offset: 208,
+                                },
+                              },
                               type: "text",
                               value:
                                 "After saving, Atlas App Services immediately begins evaluating and applying filters to\n",
-                              position: {
-                                start: { offset: 208 },
-                              },
                             },
                             {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 12,
+                                  offset: 343,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 11,
+                                  offset: 307,
+                                },
+                              },
                               type: "text",
                               value: "incoming queries on the collection.\n",
-                              position: {
-                                start: { offset: 307 },
-                              },
                             },
                           ],
+                          position: {
+                            end: {
+                              column: 13,
+                              line: 12,
+                              offset: 343,
+                            },
+                            start: {
+                              column: 13,
+                              line: 9,
+                              offset: 98,
+                            },
+                          },
+                          type: "paragraph",
                         },
                       ],
+                      directive: "step",
+                      indent: {
+                        offset: 3,
+                        width: 12,
+                      },
+                      position: {
+                        end: {
+                          column: 10,
+                          line: 12,
+                          offset: 343,
+                        },
+                        start: {
+                          column: 10,
+                          line: 7,
+                          offset: 78,
+                        },
+                      },
+                      type: "directive",
                     },
                   ],
+                  directive: "procedure",
+                  indent: {
+                    offset: 3,
+                    width: 9,
+                  },
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 12,
+                      offset: 343,
+                    },
+                    start: {
+                      column: 7,
+                      line: 5,
+                      offset: 56,
+                    },
+                  },
+                  type: "directive",
                 },
               ],
+              directive: "tab",
+              indent: {
+                offset: 3,
+                width: 6,
+              },
+              position: {
+                end: {
+                  column: 4,
+                  line: 12,
+                  offset: 343,
+                },
+                start: {
+                  column: 4,
+                  line: 3,
+                  offset: 37,
+                },
+              },
+              type: "directive",
             },
           ],
+          directive: "tabs-realm-admin-interfaces",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          position: {
+            end: {
+              column: 1,
+              line: 12,
+              offset: 343,
+            },
+            start: {
+              column: 1,
+              line: 1,
+              offset: 0,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 12,
+          offset: 343,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
 
     const source = `.. tabs-realm-admin-interfaces::
@@ -393,62 +605,116 @@ describe("restructured", () => {
             incoming queries on the collection.
 `;
     const node = restructured.parse(source);
-    expect(node).toMatchObject({
-      type: "document",
+    expect(node).toStrictEqual({
       children: [
         {
-          type: "directive",
-          directive: "tabs-realm-admin-interfaces",
           children: [
             {
-              type: "directive",
-              directive: "tab",
               children: [
                 {
-                  type: "directive",
-                  directive: "procedure",
                   children: [
                     {
-                      type: "directive",
+                      args: "Save the Filter",
+                      children: [],
                       directive: "step",
-                      children: [
-                        {
-                          type: "paragraph",
-                          children: [
-                            {
-                              type: "text",
-                              value:
-                                "After you have configured the Filter Query and the Apply When expression, click Save.\n",
-                              position: {
-                                start: { offset: 143 },
-                              },
-                            },
-                            {
-                              type: "text",
-                              value:
-                                "After saving, Atlas App Services immediately begins evaluating and applying filters to\n",
-                              position: {
-                                start: { offset: 241 },
-                              },
-                            },
-                            {
-                              type: "text",
-                              value: "incoming queries on the collection.\n",
-                              position: {
-                                start: { offset: 340 },
-                              },
-                            },
-                          ],
-                        },
+                      indent: {
+                        offset: 3,
+                        width: 12,
+                      },
+                      optionLines: [
+                        "After you have configured the Filter Query and the Apply When expression, click Save.",
+                        "After saving, Atlas App Services immediately begins evaluating and applying filters to",
+                        "incoming queries on the collection.",
                       ],
+                      position: {
+                        end: {
+                          column: 10,
+                          line: 12,
+                          offset: 376,
+                        },
+                        start: {
+                          column: 10,
+                          line: 7,
+                          offset: 95,
+                        },
+                      },
+                      type: "directive",
                     },
                   ],
+                  directive: "procedure",
+                  indent: {
+                    offset: 3,
+                    width: 9,
+                  },
+                  position: {
+                    end: {
+                      column: 7,
+                      line: 12,
+                      offset: 376,
+                    },
+                    start: {
+                      column: 7,
+                      line: 5,
+                      offset: 73,
+                    },
+                  },
+                  type: "directive",
                 },
               ],
+              directive: "tab",
+              indent: {
+                offset: 3,
+                width: 6,
+              },
+              optionLines: [":tabid: ui"],
+              position: {
+                end: {
+                  column: 4,
+                  line: 13,
+                  offset: 376,
+                },
+                start: {
+                  column: 4,
+                  line: 3,
+                  offset: 37,
+                },
+              },
+              type: "directive",
             },
           ],
+          directive: "tabs-realm-admin-interfaces",
+          indent: {
+            offset: 3,
+            width: 3,
+          },
+          position: {
+            end: {
+              column: 1,
+              line: 13,
+              offset: 376,
+            },
+            start: {
+              column: 1,
+              line: 1,
+              offset: 0,
+            },
+          },
+          type: "directive",
         },
       ],
+      position: {
+        end: {
+          column: 1,
+          line: 13,
+          offset: 376,
+        },
+        start: {
+          column: 1,
+          line: 1,
+          offset: 0,
+        },
+      },
+      type: "document",
     });
   });
 

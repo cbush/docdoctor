@@ -118,6 +118,12 @@ const parse = (
         let optionSectionLength = 0;
 
         const bodyLines = bodyRawText.split("\n");
+        // Account for a blank line being added and resulting in a premature trim
+        // Without this, optionLines were not being properly populated
+        if (directiveNode.args !== undefined) {
+          bodyLines.shift();
+        }
+
         while (bodyLines.length > 0) {
           const topLine = bodyLines.shift() as string;
           optionSectionLength += (topLine + "\n").length;

@@ -1,40 +1,18 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
-import restructured, { AnyNode } from "../restructured";
+import restructured, { AnyNode, DirectiveNode } from "../restructured";
+import { replaceSourceConstants } from "../replaceSourceConstants";
+import { SnootyConfig, loadSnootyConfig } from "../loadSnootyConfig";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
-import toml from "toml";
 import * as path from "path";
 
-type SnootyConfig = {
-  constants: Record<string, string>;
-};
-
-const loadSnootyConfig = async (
-  snootyTomlPath?: string
-): Promise<SnootyConfig> => {
-  const defaults: SnootyConfig = {
-    constants: {},
-  };
-  if (snootyTomlPath === undefined) {
-    return { ...defaults };
-  }
-  const text = await fs.readFile(snootyTomlPath, "utf8");
-  const data = toml.parse(text);
-  return { ...defaults, ...data } as SnootyConfig;
-};
-
-// https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#sections
-// Note: = reused, but uses top title for first section depth
-const titleAdornmentCharacters = ["=", "-", "~", "^", "`", "_", "="];
-
-const getText = (args: {
+export const getText = (args: {
   inputPath: string;
   document: MagicString;
   rst: AnyNode;
-  snootyConfig: SnootyConfig;
-}) => {
-  const { inputPath, rst, snootyConfig } = args;
+}): string[] => {
+  const { inputPath, rst } = args;
   const desiredText: string[] = [];
   visit(rst, (node) => {
     switch (node.type) {
@@ -42,7 +20,7 @@ const getText = (args: {
         const textNodes = findAll(node, (n) => n.type === "text");
         let text = textNodes.map((textNode) => textNode.value).join("");
         // If the last character of the title is not a period, add one.
-        // Missing periods will negatively impact readability.
+        // Missing periods negatively impact readability.
         const lastTitleChar = text.charAt(text.length - 1);
         if (lastTitleChar != ".") {
           text = text + ".";
@@ -50,43 +28,41 @@ const getText = (args: {
         desiredText.push(text + "\n");
         break;
       }
-      // TODO: Look into whether newlines in the paragraphs are inflating
-      // readability scores to be artificially high.
-      // If so, remove newlines in paragraphs and directives nodes.
       case "paragraph": {
         const textNodes = findAll(node, (n) => n.type === "text");
-        const text = textNodes.map((textNode) => textNode.value).join("");
+        let text = textNodes.map((textNode) => textNode.value).join("");
         // Remove the <some-anchor-tag> markup that the rST parsing leaves
         // in the plain text, as this skews readability.
         const unwantedText = new RegExp("<.*?>");
-        desiredText.push(text.replace(unwantedText, ""));
+        text = text.replace(unwantedText, "");
+        // In the case of bullet items, we want a period to avoid skewing
+        // readability. Add a period to the end of a paragraph if there
+        // isn't one.
+        // The character to check has to be at index -2 because index -1 is a newline
+        const penultimateParagraphChar = text.charAt(text.length - 2);
+        const lastCharacter = text.charAt(text.length - 1);
+        const acceptibleLastChar = [".", "!", "?", ":"];
+        if (!acceptibleLastChar.includes(penultimateParagraphChar)) {
+          text = text.replace(lastCharacter, ".\n");
+        }
+        desiredText.push(text);
         break;
       }
       // TODO: Clean up directive output. Check for tables, code blocks,
       // and other unwanted elements that will skew readability scores.
       case "directive": {
-        const textNodes = findAll(node, (n) => n.type === "text");
-        const text = textNodes.map((textNode) => textNode.value).join("");
-        // Remove the <some-anchor-tag> markup that the rST parsing leaves
-        // in the plain text, as this skews readability.
-        const unwantedText = new RegExp("<.*?>");
-        desiredText.push(text.replace(unwantedText, ""));
+        const directiveNode = node as DirectiveNode;
+        // If the node in the directive is an option, remove it.
+        directiveNode.children.slice(directiveNode.optionLines?.length ?? 0);
+        // TODO: do things with directive nodes that aren't options.
+        // Need to figure out how to get access to the contents of directiveNode
+        // children that are not options. I want the text in directive nodes for
+        // readability scoring.
         break;
       }
     }
   });
   return desiredText;
-};
-
-// TODO: Replace source constants in the files. If we're using them, they skew readability.
-const replaceSourceConstants = (
-  s: string,
-  constants: Record<string, string>
-): string => {
-  return Object.keys(constants).reduce(
-    (acc, cur) => acc.replace(`{+${cur}+}`, constants[cur]),
-    s
-  );
 };
 
 const getReadabilityText = async (args: {
@@ -97,7 +73,8 @@ const getReadabilityText = async (args: {
   const outputPath = path.join("output", inputPath);
   const outputDir = path.dirname(outputPath);
   const rawText = await fs.readFile(inputPath, "utf8");
-  const document = new MagicString(rawText);
+  const expandedText = replaceSourceConstants(rawText, snootyConfig.constants);
+  const document = new MagicString(expandedText);
   const rst = restructured.parse(document.original, {
     blanklines: true,
     indent: true,
@@ -107,7 +84,6 @@ const getReadabilityText = async (args: {
     inputPath,
     document,
     rst,
-    snootyConfig,
   });
   console.log(`Creating ${outputPath}`);
   console.log(`Output directory: ${outputDir}`);
