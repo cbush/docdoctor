@@ -2,28 +2,10 @@ import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
 import restructured, { AnyNode, DirectiveNode } from "../restructured";
 import { replaceSourceConstants } from "../replaceSourceConstants";
+import { SnootyConfig, loadSnootyConfig } from "../loadSnootyConfig";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
-import toml from "toml";
 import * as path from "path";
-
-export type SnootyConfig = {
-  constants: Record<string, string>;
-};
-
-export const loadSnootyConfig = async (
-  snootyTomlPath?: string
-): Promise<SnootyConfig> => {
-  const defaults: SnootyConfig = {
-    constants: {},
-  };
-  if (snootyTomlPath === undefined) {
-    return { ...defaults };
-  }
-  const text = await fs.readFile(snootyTomlPath, "utf8");
-  const data = toml.parse(text);
-  return { ...defaults, ...data } as SnootyConfig;
-};
 
 export const getText = (args: {
   inputPath: string;
