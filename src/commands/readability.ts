@@ -76,15 +76,8 @@ const getReadabilityText = async (args: {
   const { inputPath, snootyConfig } = args;
   const outputPath = path.join("output", inputPath);
   const outputDir = path.dirname(outputPath);
-  const namesOfConstantsToExpand: string[] = [];
-  const constantsToExpand = Object.fromEntries(
-    namesOfConstantsToExpand
-      .map((name) => [name, snootyConfig.constants[name]])
-      .filter(([, v]) => v !== undefined)
-  );
-  console.log(constantsToExpand);
   const rawText = await fs.readFile(inputPath, "utf8");
-  const expandedText = replaceSourceConstants(rawText, constantsToExpand);
+  const expandedText = replaceSourceConstants(rawText, snootyConfig.constants);
   const document = new MagicString(expandedText);
   const rst = restructured.parse(document.original, {
     blanklines: true,
@@ -115,7 +108,7 @@ const commandModule: CommandModule<unknown, ReadableArgs> = {
     try {
       const { paths, snootyTomlPath } = args;
       const snootyConfig = await loadSnootyConfig(snootyTomlPath);
-      console.log(snootyConfig);
+      console.log(snootyConfig.constants);
       const promises = paths.map((inputPath) =>
         getReadabilityText({ inputPath, snootyConfig })
       );
