@@ -17,7 +17,7 @@ In some cases, you may want to completely delete a realm file from disk.
 
 This is a new line with no source constant.
 
-This is a source constant: {+java-sdk-version+} .
+This is a source constant: {+java-sdk-version+}.
 
 Realm avoids copying data into memory except when absolutely required.
 As a result, all objects managed by a realm have references to the file

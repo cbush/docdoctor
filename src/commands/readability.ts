@@ -54,10 +54,6 @@ export const getText = (args: {
         const directiveNode = node as DirectiveNode;
         // If the node in the directive is an option, remove it.
         directiveNode.children.slice(directiveNode.optionLines?.length ?? 0);
-        if (directiveNode.directive === "contents") {
-          console.log(JSON.stringify(directiveNode));
-        }
-        //console.log(directiveNode.optionLines?.length);
         // TODO: do things with directive nodes that aren't options.
         // Need to figure out how to get access to the contents of directiveNode
         // children that are not options. I want the text in directive nodes for
@@ -108,7 +104,6 @@ const commandModule: CommandModule<unknown, ReadableArgs> = {
     try {
       const { paths, snootyTomlPath } = args;
       const snootyConfig = await loadSnootyConfig(snootyTomlPath);
-      console.log(snootyConfig.constants);
       const promises = paths.map((inputPath) =>
         getReadabilityText({ inputPath, snootyConfig })
       );
