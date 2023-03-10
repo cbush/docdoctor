@@ -1,6 +1,7 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
 import restructured, { AnyNode, DirectiveNode } from "../restructured";
+import { replaceSourceConstants } from "../replaceSourceConstants";
 import MagicString from "magic-string";
 import { findAll, visit } from "../tree";
 import toml from "toml";
@@ -86,17 +87,6 @@ export const getText = (args: {
   return desiredText;
 };
 
-// TODO: Replace source constants in the files. If we're using them, they skew readability.
-const replaceSourceConstants = (
-  s: string,
-  constants: Record<string, string>
-): string => {
-  return Object.keys(constants).reduce(
-    (acc, cur) => acc.replace(`{+${cur}+}`, constants[cur]),
-    s
-  );
-};
-
 const getReadabilityText = async (args: {
   inputPath: string;
   snootyConfig: SnootyConfig;
@@ -104,8 +94,16 @@ const getReadabilityText = async (args: {
   const { inputPath, snootyConfig } = args;
   const outputPath = path.join("output", inputPath);
   const outputDir = path.dirname(outputPath);
+  const namesOfConstantsToExpand: string[] = [];
+  const constantsToExpand = Object.fromEntries(
+    namesOfConstantsToExpand
+      .map((name) => [name, snootyConfig.constants[name]])
+      .filter(([, v]) => v !== undefined)
+  );
+  console.log(constantsToExpand);
   const rawText = await fs.readFile(inputPath, "utf8");
-  const document = new MagicString(rawText);
+  const expandedText = replaceSourceConstants(rawText, constantsToExpand);
+  const document = new MagicString(expandedText);
   const rst = restructured.parse(document.original, {
     blanklines: true,
     indent: true,
@@ -135,6 +133,7 @@ const commandModule: CommandModule<unknown, ReadableArgs> = {
     try {
       const { paths, snootyTomlPath } = args;
       const snootyConfig = await loadSnootyConfig(snootyTomlPath);
+      console.log(snootyConfig);
       const promises = paths.map((inputPath) =>
         getReadabilityText({ inputPath, snootyConfig })
       );
