@@ -48,16 +48,9 @@ export const getText = (args: {
         desiredText.push(text);
         break;
       }
-      // TODO: Clean up directive output. Check for tables, code blocks,
-      // and other unwanted elements that will skew readability scores.
       case "directive": {
-        const directiveNode = node as DirectiveNode;
-        // If the node in the directive is an option, remove it.
-        directiveNode.children.slice(directiveNode.optionLines?.length ?? 0);
-        // TODO: do things with directive nodes that aren't options.
-        // Need to figure out how to get access to the contents of directiveNode
-        // children that are not options. I want the text in directive nodes for
-        // readability scoring.
+        // TODO: Clean up directive output. Check for tables, code blocks,
+        // and other unwanted elements that will skew readability scores.
         break;
       }
     }

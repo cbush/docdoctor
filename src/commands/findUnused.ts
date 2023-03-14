@@ -265,9 +265,9 @@ export const findUnused = async ({
   ignore,
 }: {
   path: string;
-  snootyConfig: SnootyConfig;
+  snootyConfig?: SnootyConfig;
   ignore?: string | string[];
-}): Promise<void> => {
+}): Promise<string[]> => {
   const graph = new Graph(path);
   const entryPointPath = "index.txt";
   await graph.scan(entryPointPath, { ignore });
@@ -275,7 +275,7 @@ export const findUnused = async ({
   const unusedFilePaths = Array.from(graph.pathToFile.values())
     .filter((file) => file !== rootFile && file.referenceCount === 0)
     .map(({ realPath }) => realPath);
-  unusedFilePaths.forEach((v) => console.log(v));
+  return unusedFilePaths;
 };
 
 export type FindUnusedArgs = {
@@ -296,7 +296,8 @@ const commandModule: CommandModule<unknown, FindUnusedArgs> = {
     try {
       const { path, snootyTomlPath, ignore } = args;
       const snootyConfig = await loadSnootyConfig(snootyTomlPath);
-      await findUnused({ path, snootyConfig, ignore });
+      const unusedFilePaths = await findUnused({ path, snootyConfig, ignore });
+      unusedFilePaths.forEach((v) => console.log(v));
     } catch (error) {
       console.error(error);
       process.exit(1);

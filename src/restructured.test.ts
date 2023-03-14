@@ -23,12 +23,12 @@ describe("restructured", () => {
                     end: {
                       column: 4,
                       line: 5,
-                      offset: 82,
+                      offset: 83,
                     },
                     start: {
                       column: 7,
                       line: 4,
-                      offset: 75,
+                      offset: 76,
                     },
                   },
                   type: "text",
@@ -39,12 +39,12 @@ describe("restructured", () => {
                     end: {
                       column: 4,
                       line: 6,
-                      offset: 92,
+                      offset: 93,
                     },
                     start: {
                       column: 7,
                       line: 5,
-                      offset: 85,
+                      offset: 86,
                     },
                   },
                   type: "text",
@@ -55,12 +55,12 @@ describe("restructured", () => {
                 end: {
                   column: 4,
                   line: 6,
-                  offset: 92,
+                  offset: 93,
                 },
                 start: {
                   column: 4,
                   line: 4,
-                  offset: 72,
+                  offset: 73,
                 },
               },
               type: "paragraph",
@@ -133,12 +133,12 @@ describe("restructured", () => {
                     end: {
                       column: 4,
                       line: 5,
-                      offset: 56,
+                      offset: 57,
                     },
                     start: {
                       column: 7,
                       line: 4,
-                      offset: 51,
+                      offset: 52,
                     },
                   },
                   type: "text",
@@ -149,12 +149,12 @@ describe("restructured", () => {
                 end: {
                   column: 4,
                   line: 5,
-                  offset: 56,
+                  offset: 57,
                 },
                 start: {
                   column: 4,
                   line: 4,
-                  offset: 48,
+                  offset: 49,
                 },
               },
               type: "paragraph",
@@ -169,12 +169,12 @@ describe("restructured", () => {
                         end: {
                           column: 7,
                           line: 9,
-                          offset: 150,
+                          offset: 152,
                         },
                         start: {
                           column: 13,
                           line: 8,
-                          offset: 129,
+                          offset: 131,
                         },
                       },
                       type: "text",
@@ -185,12 +185,12 @@ describe("restructured", () => {
                     end: {
                       column: 7,
                       line: 9,
-                      offset: 150,
+                      offset: 152,
                     },
                     start: {
                       column: 7,
                       line: 8,
-                      offset: 123,
+                      offset: 125,
                     },
                   },
                   type: "paragraph",
@@ -204,12 +204,12 @@ describe("restructured", () => {
                             end: {
                               column: 10,
                               line: 13,
-                              offset: 255,
+                              offset: 257,
                             },
                             start: {
                               column: 19,
                               line: 12,
-                              offset: 238,
+                              offset: 240,
                             },
                           },
                           type: "text",
@@ -220,12 +220,12 @@ describe("restructured", () => {
                         end: {
                           column: 10,
                           line: 13,
-                          offset: 255,
+                          offset: 257,
                         },
                         start: {
                           column: 10,
                           line: 12,
-                          offset: 229,
+                          offset: 231,
                         },
                       },
                       type: "paragraph",
@@ -241,12 +241,12 @@ describe("restructured", () => {
                     end: {
                       column: 7,
                       line: 16,
-                      offset: 256,
+                      offset: 258,
                     },
                     start: {
                       column: 7,
                       line: 10,
-                      offset: 151,
+                      offset: 153,
                     },
                   },
                   type: "directive",
@@ -262,12 +262,12 @@ describe("restructured", () => {
                 end: {
                   column: 4,
                   line: 17,
-                  offset: 257,
+                  offset: 258,
                 },
                 start: {
                   column: 4,
                   line: 6,
-                  offset: 57,
+                  offset: 58,
                 },
               },
               type: "directive",
@@ -279,12 +279,12 @@ describe("restructured", () => {
                     end: {
                       column: 4,
                       line: 18,
-                      offset: 267,
+                      offset: 268,
                     },
                     start: {
                       column: 7,
                       line: 17,
-                      offset: 260,
+                      offset: 261,
                     },
                   },
                   type: "text",
@@ -295,12 +295,12 @@ describe("restructured", () => {
                 end: {
                   column: 4,
                   line: 18,
-                  offset: 267,
+                  offset: 268,
                 },
                 start: {
                   column: 4,
                   line: 17,
-                  offset: 257,
+                  offset: 258,
                 },
               },
               type: "paragraph",
@@ -615,17 +615,80 @@ describe("restructured", () => {
                   children: [
                     {
                       args: "Save the Filter",
-                      children: [],
+                      children: [
+                        {
+                          children: [
+                            {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 10,
+                                  offset: 229,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 9,
+                                  offset: 143,
+                                },
+                              },
+                              type: "text",
+                              value:
+                                "After you have configured the Filter Query and the Apply When expression, click Save.\n",
+                            },
+                            {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 11,
+                                  offset: 328,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 10,
+                                  offset: 241,
+                                },
+                              },
+                              type: "text",
+                              value:
+                                "After saving, Atlas App Services immediately begins evaluating and applying filters to\n",
+                            },
+                            {
+                              position: {
+                                end: {
+                                  column: 13,
+                                  line: 12,
+                                  offset: 376,
+                                },
+                                start: {
+                                  column: 25,
+                                  line: 11,
+                                  offset: 340,
+                                },
+                              },
+                              type: "text",
+                              value: "incoming queries on the collection.\n",
+                            },
+                          ],
+                          position: {
+                            end: {
+                              column: 13,
+                              line: 12,
+                              offset: 376,
+                            },
+                            start: {
+                              column: 13,
+                              line: 9,
+                              offset: 131,
+                            },
+                          },
+                          type: "paragraph",
+                        },
+                      ],
                       directive: "step",
                       indent: {
                         offset: 3,
                         width: 12,
                       },
-                      optionLines: [
-                        "After you have configured the Filter Query and the Apply When expression, click Save.",
-                        "After saving, Atlas App Services immediately begins evaluating and applying filters to",
-                        "incoming queries on the collection.",
-                      ],
                       position: {
                         end: {
                           column: 10,

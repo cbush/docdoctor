@@ -1,0 +1,10 @@
+.. tabs::
+
+   .. tab:: Visual Studio on Windows
+      :tabid: vs-win
+
+      .. procedure::
+
+         .. step:: Add the Realm Weaver to FodyWeavers.xml
+
+            .. include:: /includes/some-include.rst

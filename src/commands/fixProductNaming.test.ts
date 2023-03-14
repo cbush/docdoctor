@@ -82,7 +82,7 @@ const productPhrases: ProductPhrases = [
 // Currently skipping these tests as updates to restructured.ts require tweaks
 // to `fixProductNaming` and these tests fail
 describe("fixProductNaming", () => {
-  it.skip("inserts replacements at the correct spot", () => {
+  it("inserts replacements at the correct spot", () => {
     const source = `.. tabs-realm-admin-interfaces::
    
    .. tab::
@@ -112,7 +112,7 @@ describe("fixProductNaming", () => {
 `);
   });
 
-  it.skip("handles two-line searches", () => {
+  it("handles two-line searches", () => {
     const source = `.. tabs-realm-admin-interfaces::
    
    .. tab::
@@ -141,7 +141,7 @@ describe("fixProductNaming", () => {
              handle incoming requests.
 `);
   });
-  it.skip("handles multi-line searches", () => {
+  it("handles multi-line searches", () => {
     const source = `.. tabs-realm-admin-interfaces::
    
    .. tab::
@@ -173,7 +173,7 @@ describe("fixProductNaming", () => {
 `);
   });
 
-  it.skip("handles expansions in titles", () => {
+  it("handles expansions in titles", () => {
     const source = `=================================================
 Set up JWT Authentication with Atlas App Services
 =================================================

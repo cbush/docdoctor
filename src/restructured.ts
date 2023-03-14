@@ -82,12 +82,16 @@ const parse = (
         // options and content is all more complicated than it would otherwise be.
 
         // Extract args node if any
-        if (
+        while (
           node.children[0]?.position.start.line === node.position.start.line
         ) {
           const argsNode = node.children.shift() as TextNode;
+          const argValue = argsNode.value.trim();
           assert(argsNode.type === "text");
-          directiveNode.args = argsNode.value.trim();
+          directiveNode.args =
+            directiveNode.args === undefined
+              ? argValue
+              : `${directiveNode.args} ${argValue}`;
         }
 
         if (node.children.length === 0) {
@@ -95,34 +99,12 @@ const parse = (
           return;
         }
 
-        // Reconstruct the directive body (including options and content)
-        const bodyPosition = { ...node.children[0].position };
-        bodyPosition.end = {
-          ...node.children[node.children.length - 1].position.end,
-        };
-
-        // Adjust body position if there was an args node
-        if (directiveNode.args !== undefined) {
-          --bodyPosition.start.offset; // Restore the \n we cut off
-        }
-
-        const bodyRawText = rst.substring(
-          bodyPosition.start.offset,
-          bodyPosition.end.offset
-        );
-
-        const { indent } = node;
-        assert(indent !== undefined);
+        const { bodyPosition, bodyLines } = getBody({ node, rst });
 
         // Track the length of the option section for position adjustment later
         let optionSectionLength = 0;
-
-        const bodyLines = bodyRawText.split("\n");
-        // Account for a blank line being added and resulting in a premature trim
-        // Without this, optionLines were not being properly populated
-        if (directiveNode.args !== undefined) {
-          bodyLines.shift();
-        }
+        const { indent } = node;
+        assert(indent !== undefined);
 
         while (bodyLines.length > 0) {
           const topLine = bodyLines.shift() as string;
@@ -231,6 +213,30 @@ const parse = (
 
   return root;
 };
+
+function getBody({ rst, node }: { rst: string; node: AnyNode }) {
+  // Reconstruct the directive body (including options and content). Start at
+  // directive start, then adjust by peeling off the first line (directive +
+  // maybe arg).
+  const bodyPosition = {
+    end: {
+      ...node.children[node.children.length - 1].position.end,
+    },
+    start: { ...node.position.start },
+  };
+
+  const rawText = rst.substring(
+    bodyPosition.start.offset,
+    bodyPosition.end.offset
+  );
+
+  const bodyLines = rawText.split("\n");
+  bodyPosition.start.line += 1;
+  bodyPosition.start.column = 1;
+  bodyPosition.start.offset += bodyLines[0].length + 1;
+  bodyLines.shift();
+  return { bodyLines, bodyPosition };
+}
 
 export { AnyNode, Location, Node, ParentNode, ValueNode } from "restructured";
 export default { parse };
