@@ -207,11 +207,12 @@ class Graph {
       .forEach((line) => {
         const matches = /^.*<(.*)>\s*$/.exec(line);
         if (matches === null) {
+          // Here assume the entry is just the link
+          this.connect(file, line.trim());
           return;
         }
         // Toctree entries might have trailing .txt or /
         const target = matches[1].replace(/\/$/, "").replace(/\.txt$/, "");
-
         this.connect(file, target);
       });
   };
