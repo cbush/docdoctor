@@ -14,7 +14,8 @@
     "verbose": "jest --verbose",
     "coverage": "jest --coverage",
     "docs": "npx typedoc --excludePrivate --exclude '**/*.test.ts' --out docs src",
-    "release": "release-it"
+    "release": "release-it",
+    "prerelease": "npm run clean && npm run build && npm run test && npm run docs"
   },
   "author": "Chris Bush",
   "license": "MIT",
