@@ -35,7 +35,7 @@ export const getInnerText = (node: AnyNode): string =>
 
 // Wrapper that handles directives. WARNING: Line, columns, and indent may not
 // be 100% accurate.
-const parse = (
+export const parse = (
   rst: string,
   options?: {
     // "position" and "indent" options are automatically set, so whatever passed
