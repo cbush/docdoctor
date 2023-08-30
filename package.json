@@ -2,7 +2,7 @@
   "name": "docdoctor",
   "version": "0.0.2",
   "description": "Fix up rST",
-  "main": "./build/main.js",
+  "main": "./build/index.js",
   "bin": {
     "docdoctor": "./build/main.js"
   },
