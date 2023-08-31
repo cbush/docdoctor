@@ -10,7 +10,6 @@ import {
   AnyNode,
   DirectiveNode,
   LabelNode,
-  ReferenceNode,
   InlineLinkNode,
   getInnerText,
 } from "../restructured";
@@ -263,7 +262,7 @@ class Graph {
 
 export const findUnused = async ({
   path,
-  ignore,
+  ignore: ignoreIn,
 }: {
   path: string;
   snootyConfig?: SnootyConfig;
@@ -271,7 +270,18 @@ export const findUnused = async ({
 }): Promise<string[]> => {
   const graph = new Graph(path);
   const entryPointPath = "index.txt";
-  await graph.scan(entryPointPath, { ignore });
+  const ignore = Array.isArray(ignoreIn)
+    ? ignoreIn
+    : ignoreIn !== undefined
+    ? [ignoreIn]
+    : [];
+
+  await graph.scan(entryPointPath, {
+    ignore: [
+      "**/facets.toml", // Snooty built-in facets file in source
+      ...ignore,
+    ],
+  });
   const rootFile = graph.rootFile;
   const unusedFilePaths = Array.from(graph.pathToFile.values())
     .filter((file) => file !== rootFile && file.referenceCount === 0)
