@@ -15,4 +15,11 @@ describe("findUnused", () => {
     });
     expect(unusedPaths).toStrictEqual([]);
   });
+
+  it("auto-ignores facets.toml", async () => {
+    const unusedPaths = await findUnused({
+      path: Path.join(__dirname, "..", "..", "test", "findUnused", "facets"),
+    });
+    expect(unusedPaths).toStrictEqual([]);
+  });
 });
