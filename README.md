@@ -10,7 +10,7 @@ Clone the repo, then:
 cd docdoctor
 npm install
 npm run build
-node . --help
+node ./build/main --help
 ```
 
 ## Commands (Incomplete List)
@@ -35,5 +35,5 @@ that would otherwise falsely impact the readability score of the page text.
 Usage Example:
 
 ```shell
-node . getReadabilityText test/readability/delete-a-realm.txt --snootyTomlPath=test/readability/snooty.toml
+node ./build/main getReadabilityText test/readability/delete-a-realm.txt --snootyTomlPath=test/readability/snooty.toml
 ```
