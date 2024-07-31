@@ -155,10 +155,28 @@ const commandModule: CommandModule<unknown, FindNestedArgs> = {
     try {
       const { branch, project, dataApiBaseUrl } = args;
       const pageData = await fetchPageData({ branch, project, dataApiBaseUrl });
+      /*
       pageData.forEach((page) => {
         const result = findNested(page);
         console.log(JSON.stringify(result));
       });
+      */
+      console.log(
+        JSON.stringify(
+          pageData
+            .map(findNested)
+            .reduce(
+              (acc, cur) =>
+                Object.fromEntries(
+                  Object.entries(cur.counts).map(([k, v]) => [
+                    k,
+                    v + (acc[k] ?? 0),
+                  ])
+                ),
+              {} as Record<string, number>
+            )
+        )
+      );
     } catch (error) {
       console.error(error);
       process.exit(1);
