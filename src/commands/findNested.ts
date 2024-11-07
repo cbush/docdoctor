@@ -140,6 +140,34 @@ const ADMONITION_TYPE_DIRECTIVE_NAMES = [
 const offenseCounters: Record<string, OffenseCounter> = {
   tabsSelectors: (ast) =>
     findDirectivesNamed(ast, DirectiveNames.TABS_SELECTOR).length,
+  nestedTabsBeyondTabsSelectors: (ast) => {
+    // If the page has the "tabs-selector" directive, then the tabs directives
+    // for the specified tabset become selectable by the page-level language
+    // selector. This has supposedly less SEO impact than "real" tabs within
+    // tabs, so they can potentially be left alone.
+
+    // Find tabsets specified by tabs-selector
+    const selectorNames = findDirectivesNamed(
+      ast,
+      DirectiveNames.TABS_SELECTOR
+    ).map(
+      (directive) =>
+        (directive as unknown as { argument: [{ value: string }] }).argument[0]
+          .value
+    );
+    // Find tabs directives and selectively ignore tabsets specified in the
+    // tabs-selector directive
+    return findDirectivesNamed(ast, DirectiveNames.TABS)
+      .map((tabs) => {
+        const tabsetName = (
+          tabs as unknown as { options?: { tabset?: string } }
+        ).options?.tabset;
+        return tabsetName && selectorNames.includes(tabsetName)
+          ? countNestedDirectives(tabs, DirectiveNames.TABS)
+          : findDirectivesNamed(tabs, DirectiveNames.TABS).length;
+      })
+      .reduce((acc, cur) => acc + cur, 0);
+  },
   nestedTabs: (ast) => countNestedDirectives(ast, DirectiveNames.TABS),
   tablesInTables: (ast) => countNestedDirectives(ast, DirectiveNames.TABLE),
   admonitionsInAdmonitions: (ast) =>
