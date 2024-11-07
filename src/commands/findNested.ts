@@ -118,6 +118,7 @@ const countNestedDirectives = (
 type OffenseCounter = (ast: ParentNode) => number;
 
 enum DirectiveNames {
+  TABS_SELECTOR = "tabs-selector",
   TABS = "tabs",
   TABLE = "list-table",
   PROCEDURE = "procedure",
@@ -137,6 +138,8 @@ const ADMONITION_TYPE_DIRECTIVE_NAMES = [
 ];
 
 const offenseCounters: Record<string, OffenseCounter> = {
+  tabsSelectors: (ast) =>
+    findDirectivesNamed(ast, DirectiveNames.TABS_SELECTOR).length,
   nestedTabs: (ast) => countNestedDirectives(ast, DirectiveNames.TABS),
   tablesInTables: (ast) => countNestedDirectives(ast, DirectiveNames.TABLE),
   admonitionsInAdmonitions: (ast) =>
@@ -267,6 +270,7 @@ const commandModule: CommandModule<unknown, FindNestedArgs> = {
           ({ counts }) =>
             Object.values(counts).reduce((acc, cur) => acc + cur, 0) > 0 // Only include results if any count > 0
         );
+
       console.log(
         stringify(
           results.map(({ counts, pageId }) => ({
