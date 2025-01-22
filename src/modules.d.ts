@@ -66,6 +66,7 @@ declare module "restructured" {
       | "tbody"
       | "row"
       | "entry"
+      | "code"
       // Explicit Markup Blocks
       | "footnote"
       | "label"

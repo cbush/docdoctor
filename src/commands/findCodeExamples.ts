@@ -80,6 +80,8 @@ const findDirectives = (ast: ParentNode) => {
   ).filter((node) => node !== ast); // exclude self
 };
 
+// Look for directives with a specific name. Works for `io-code-block` and
+// `literalinclude` because they're mapped to the `name` attribute in the AST.
 const findDirectivesNamed = (ast: ParentNode, named: string | string[]) => {
   const names = Array.isArray(named) ? named : [named];
   const directives = findDirectives(ast).filter(({ name }) =>
@@ -89,41 +91,46 @@ const findDirectivesNamed = (ast: ParentNode, named: string | string[]) => {
   return directives;
 };
 
+type CodeNode = ParentNode & {
+  type: "code";
+  position: {
+    start: {
+      line: number;
+    };
+  };
+  lang: string;
+  copyable: boolean;
+  emphasizeLines: number[];
+  linenos: boolean;
+};
+
+const findCodeBlocks = (ast: ParentNode) => {
+  return (findAll(ast, ({ type }) => type === "code") as CodeNode[]).filter(
+    (node) => node !== ast
+  ); // exclude self
+};
+
 type CodeExampleCounter = (ast: ParentNode) => number;
 
 enum CodeExampleDirectiveNames {
-  CODE = "code",
-  CODE_BLOCK = "code-block",
   IO_CODE_BLOCK = "io-code-block",
   LITERALINCLUDE = "literalinclude",
 }
 
 const codeExamples: Record<string, CodeExampleCounter> = {
-  // "code-block" is mapped to two directives: "code-block" and "code"
-  codeBlocks: (ast) => {
-    const codeBlockDirectives = findDirectivesNamed(
-      ast,
-      CodeExampleDirectiveNames.CODE_BLOCK
-    ).length;
-    const codeDirectives = findDirectivesNamed(
-      ast,
-      CodeExampleDirectiveNames.CODE
-    ).length;
-
-    return codeBlockDirectives + codeDirectives;
-  },
+  codeBlocks: (ast) => findCodeBlocks(ast).length,
   ioCodeBlocks: (ast) =>
     findDirectivesNamed(ast, CodeExampleDirectiveNames.IO_CODE_BLOCK).length,
   literalIncludes: (ast) =>
     findDirectivesNamed(ast, CodeExampleDirectiveNames.LITERALINCLUDE).length,
 };
 
-type FindNestedResult = {
+type FindCodeExamplesResult = {
   pageId: string;
   counts: Record<string, number>;
 };
 
-const findCodeExamples = (pageData: SnootyPageData): FindNestedResult => {
+const findCodeExamples = (pageData: SnootyPageData): FindCodeExamplesResult => {
   return {
     pageId: pageData.page_id,
     counts: Object.fromEntries(
@@ -135,7 +142,7 @@ const findCodeExamples = (pageData: SnootyPageData): FindNestedResult => {
   };
 };
 
-type FindNestedArgs = {
+type FindCodeExamplesArgs = {
   snootyDataApiBaseUrl?: string;
   branch?: string;
   repo: string;
@@ -159,7 +166,7 @@ const makeGitHubBaseUrl = async ({
   return mongoDbUrl;
 };
 
-const commandModule: CommandModule<unknown, FindNestedArgs> = {
+const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {
   command: "findCodeExamples",
   builder(args) {
     return args
@@ -247,7 +254,9 @@ const commandModule: CommandModule<unknown, FindNestedArgs> = {
         return acc;
       }, {} as Record<string, number>);
 
+      // Page-level data
       const outputData = {
+        numberOfPages: pageData.length,
         repoName,
         projectName,
         branchName,
@@ -255,23 +264,9 @@ const commandModule: CommandModule<unknown, FindNestedArgs> = {
         pageLevelData,
       };
 
-      // If no `generated` directory exists, create it
+      // Write output to output.json
       try {
-        await fs.access("generated");
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-          await fs.mkdir("generated");
-        } else {
-          throw error;
-        }
-      }
-
-      // Write output to generated/output.json
-      try {
-        await fs.writeFile(
-          "generated/output.json",
-          JSON.stringify(outputData, null, 2)
-        );
+        await fs.writeFile("output.json", JSON.stringify(outputData, null, 2));
         console.log("Output written to output.json");
       } catch (error) {
         console.error("Error writing to output.json:", error);
@@ -282,7 +277,7 @@ const commandModule: CommandModule<unknown, FindNestedArgs> = {
       process.exit(1);
     }
   },
-  describe: "Find nested components",
+  describe: "Find code examples in docs pages",
 };
 
 export default commandModule;
