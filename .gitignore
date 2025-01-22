@@ -126,3 +126,5 @@ build/
 # vscode
 .vscode/
 
+# Generated files
+generated/
