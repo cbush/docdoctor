@@ -4,7 +4,11 @@ import { CommandModule } from "yargs";
 import { createInterface } from "readline";
 import { findAll } from "../tree";
 import { ParentNode } from "restructured";
-import { makeSnootyProjectsInfo } from "../SnootyProjectsInfo";
+import {
+  makeSnootyProjectsInfo,
+  SnootyProjectsInfo,
+  SnootyProject,
+} from "../SnootyProjectsInfo";
 import {
   SnootyManifestEntry,
   SnootyPageData,
@@ -110,6 +114,10 @@ const findCodeBlocks = (ast: ParentNode) => {
   ); // exclude self
 };
 
+const findCodeBlockLanguages = (ast: ParentNode) => {
+  return findCodeBlocks(ast).map(({ lang }) => lang);
+};
+
 type CodeExampleCounter = (ast: ParentNode) => number;
 
 enum CodeExampleDirectiveNames {
@@ -125,9 +133,30 @@ const codeExamples: Record<string, CodeExampleCounter> = {
     findDirectivesNamed(ast, CodeExampleDirectiveNames.LITERALINCLUDE).length,
 };
 
+const languageCounts = (ast: ParentNode) => {
+  const languages = findCodeBlockLanguages(ast).reduce((acc, cur) => {
+    acc[cur] = (acc[cur] || 0) + 1;
+
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Sort totalLanguageCounts from largest to smallest
+  const sortedTotalLanguageCounts = Object.fromEntries(
+    Object.entries(languages).sort(([, a], [, b]) => b - a)
+  );
+
+  // TODO: de-duplicate language names ("sh", "shell", "bash", "console",
+  // and "powershell" are the same). maybe categorize them all as shell?
+
+  // TODO: figure out how to evaluate literalincludes to get their language
+  // if it's not specified. Would need to look at the file extension.
+  return sortedTotalLanguageCounts;
+};
+
 type FindCodeExamplesResult = {
   pageId: string;
   counts: Record<string, number>;
+  languageCounts: Record<string, number>;
 };
 
 const findCodeExamples = (pageData: SnootyPageData): FindCodeExamplesResult => {
@@ -139,6 +168,7 @@ const findCodeExamples = (pageData: SnootyPageData): FindCodeExamplesResult => {
         codeExamples(pageData.ast),
       ])
     ),
+    languageCounts: languageCounts(pageData.ast),
   };
 };
 
@@ -166,110 +196,200 @@ const makeGitHubBaseUrl = async ({
   return mongoDbUrl;
 };
 
+type BuildRepoReportArgs = {
+  snootyProjectsInfo: SnootyProjectsInfo & {
+    _data: SnootyProject[];
+  };
+  repoName: string;
+  projectName: string;
+};
+
+const buildRepoReport = async ({
+  snootyProjectsInfo,
+  repoName,
+  projectName,
+}: BuildRepoReportArgs) => {
+  const branchName =
+    (await snootyProjectsInfo.getCurrentVersionName({
+      projectName,
+    })) ?? "master";
+
+  const baseUrl = await snootyProjectsInfo.getBaseUrl({
+    projectName,
+    branchName,
+  });
+
+  const snootyDataApiBaseUrl = defaultSnootyDataApiBaseUrl;
+  const pageData = await fetchPageData({
+    branchName,
+    projectName,
+    snootyDataApiBaseUrl,
+  });
+
+  const repoBaseUrl = await makeGitHubBaseUrl({ repoName, branchName });
+
+  const results = pageData
+    .map((page) => findCodeExamples(page))
+    .filter(
+      ({ counts }) =>
+        Object.values(counts).reduce((acc, cur) => acc + cur, 0) > 0 // Only include results if any count > 0
+    );
+
+  const pageLevelData = results.map(({ counts, languageCounts, pageId }) => ({
+    repoName,
+    projectName,
+    branchName,
+    pageId: pageId.replace(
+      `${projectName}/docsworker-xlarge/${branchName}/`,
+      baseUrl.replace(/\/?$/, "/")
+    ),
+    pageSource: `${pageId.replace(
+      `${projectName}/docsworker-xlarge/${branchName}/`,
+      repoBaseUrl
+    )}.txt`,
+    ...counts,
+    languageCounts: { ...languageCounts },
+  }));
+
+  const totalCounts = results.reduce((acc, { counts }) => {
+    for (const [key, value] of Object.entries(counts)) {
+      acc[key] = (acc[key] || 0) + value;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // aggregate language counts
+  const totalLanguageCounts = results.reduce((acc, { languageCounts }) => {
+    for (const [key, value] of Object.entries(languageCounts)) {
+      acc[key] = (acc[key] || 0) + value;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Sort totalLanguageCounts from largest to smallest
+  const sortedTotalLanguageCounts = Object.fromEntries(
+    Object.entries(totalLanguageCounts).sort(([, a], [, b]) => b - a)
+  );
+
+  // TODO: separate 1-line code examples from multi-line code examples
+  // TODO: include URL to specific examples? We have line numbers, I think.
+
+  // Page-level data
+  const outputData = {
+    numberOfPages: pageData.length,
+    repoName,
+    projectName,
+    branchName,
+    totalCounts,
+    totalLanguageCounts: sortedTotalLanguageCounts,
+    pageLevelData,
+  };
+
+  // Write output to individual output files
+  const outputPath = `report-${repoName}.json`;
+  try {
+    await fs.writeFile(outputPath, JSON.stringify(outputData, null, 2));
+  } catch (error) {
+    process.exit(1);
+  }
+
+  return outputData;
+};
+
 const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {
   command: "findCodeExamples",
-  builder(args) {
-    return args
-      .option("snootyDataApiBaseUrl", {
-        array: false,
-        type: "string",
-        demandOption: false,
-      })
-      .option("repo", {
-        type: "string",
-        array: false,
-        demandOption: true,
-      })
-      .option("branch", { type: "string", array: false, demandOption: false });
-  },
   handler: async (args) => {
     try {
-      const {
-        branch,
-        repo: repoName,
-        snootyDataApiBaseUrl,
-      } = {
-        ...args,
+      const { snootyDataApiBaseUrl } = {
         snootyDataApiBaseUrl:
           args.snootyDataApiBaseUrl ?? defaultSnootyDataApiBaseUrl,
       };
+
+      const reports = [];
 
       const snootyProjectsInfo = await makeSnootyProjectsInfo({
         snootyDataApiBaseUrl,
       });
 
-      const projectName = await snootyProjectsInfo.getProjectName({ repoName });
+      const ignoreList = [
+        "atlas-open-service-broker",
+        "docs-realm",
+        "docs-app-services",
+        "datalake",
+      ];
 
-      if (projectName === undefined) {
-        throw new Error(`Couldn't find project for repo '${repoName}'!`);
-      }
+      // filter out projects that are in the ignore list
+      const filteredProjects = snootyProjectsInfo._data.filter(
+        (project) => !ignoreList.includes(project.repoName)
+      );
 
-      const branchName =
-        branch ??
-        (await snootyProjectsInfo.getCurrentVersionName({
-          projectName,
-        })) ??
-        "master";
+      for (const project of filteredProjects) {
+        const projectName = await snootyProjectsInfo.getProjectName({
+          repoName: project.repoName,
+        });
 
-      const baseUrl = await snootyProjectsInfo.getBaseUrl({
-        projectName,
-        branchName,
-      });
+        console.log(`Processing project ${projectName}`);
 
-      const pageData = await fetchPageData({
-        branchName,
-        projectName,
-        snootyDataApiBaseUrl,
-      });
-
-      const repoBaseUrl = await makeGitHubBaseUrl({ repoName, branchName });
-
-      // todo: check if page data includes code-block directives
-      const results = pageData
-        .map((page) => findCodeExamples(page))
-        .filter(
-          ({ counts }) =>
-            Object.values(counts).reduce((acc, cur) => acc + cur, 0) > 0 // Only include results if any count > 0
-        );
-
-      const pageLevelData = results.map(({ counts, pageId }) => ({
-        repoName,
-        projectName,
-        branchName,
-        pageId: pageId.replace(
-          `${projectName}/docsworker-xlarge/${branchName}/`,
-          baseUrl.replace(/\/?$/, "/")
-        ),
-        pageSource: `${pageId.replace(
-          `${projectName}/docsworker-xlarge/${branchName}/`,
-          repoBaseUrl
-        )}.txt`,
-        ...counts,
-      }));
-
-      const totalCounts = results.reduce((acc, { counts }) => {
-        for (const [key, value] of Object.entries(counts)) {
-          acc[key] = (acc[key] || 0) + value;
+        if (projectName === undefined) {
+          throw new Error(
+            `Couldn't find project for repo '${project.repoName}'!`
+          );
+        } else if (ignoreList.includes(projectName)) {
+          console.log(`Ignoring project ${projectName}`);
+          continue;
         }
-        return acc;
-      }, {} as Record<string, number>);
 
-      // Page-level data
-      const outputData = {
-        numberOfPages: pageData.length,
-        repoName,
-        projectName,
-        branchName,
-        totalCounts,
-        pageLevelData,
+        const repoReport = await buildRepoReport({
+          snootyProjectsInfo,
+          repoName: project.repoName,
+          projectName,
+        });
+
+        reports.push(repoReport);
+
+        // SIMPLIFIED TESTING TARGETING ONE REPO
+        // if (projectName === "cloud-docs") {
+        //   const repoReport = await buildRepoReport({
+        //     snootyProjectsInfo,
+        //     repoName: project.repoName,
+        //     projectName,
+        //   });
+
+        //   reports.push(repoReport);
+        // }
+      }
+      const totalLanguageCounts = reports.reduce(
+        (acc, { totalLanguageCounts }) => {
+          for (const [key, value] of Object.entries(totalLanguageCounts)) {
+            acc[key] = (acc[key] || 0) + value;
+          }
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+      // Sort totalLanguageCounts from largest to smallest
+      const sortedTotalLanguageCounts = Object.fromEntries(
+        Object.entries(totalLanguageCounts).sort(([, a], [, b]) => b - a)
+      );
+
+      // aggregate totals from all reports
+      const totals = {
+        totalCounts: reports.reduce((acc, { totalCounts }) => {
+          for (const [key, value] of Object.entries(totalCounts)) {
+            acc[key] = (acc[key] || 0) + value;
+          }
+          return acc;
+        }, {} as Record<string, number>),
+        totalLanguageCounts: sortedTotalLanguageCounts,
       };
 
-      // Write output to output.json
+      const outputPath = `report-all.json`;
       try {
-        await fs.writeFile("output.json", JSON.stringify(outputData, null, 2));
-        console.log("Output written to output.json");
+        await fs.writeFile(outputPath, JSON.stringify(totals, null, 2));
+        console.log(`Output written to ${outputPath}`);
       } catch (error) {
-        console.error("Error writing to output.json:", error);
+        console.error(`Error writing to ${outputPath}:`, error);
         process.exit(1);
       }
     } catch (error) {
