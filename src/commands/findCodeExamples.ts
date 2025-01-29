@@ -13,7 +13,7 @@ import {
   SnootyManifestEntry,
   SnootyPageData,
   SnootyPageEntry,
-} from "./findNested";
+} from "../SnootyTypes";
 
 const defaultSnootyDataApiBaseUrl = "https://snooty-data-api.mongodb.com/prod/";
 
