@@ -30,7 +30,8 @@ import {
   IoCodeBlock,
   PageSubtypeCodeExampleResults,
   PageCodeReport,
-  RepoCodeReport,
+  SerializedPageCodeReport,
+  RepoCodeReport, serializePageCodeReport
 } from "../CodeExampleTypes";
 
 const defaultSnootyDataApiBaseUrl = "https://snooty-data-api.mongodb.com/prod/";
@@ -394,12 +395,9 @@ const buildRepoReport = async ({
   // let repoIoCodeBlockLangCounts = getNewLangCounterMap();
   // let repoIoCodeBlockTotal = 0;
 
-  const pageReports: PageCodeReport[] = [];
+  const serializedPageReports: SerializedPageCodeReport[] = [];
   for (const thisPage of pageData) {
     const pageReport = await processCodeExamples(thisPage);
-    const pageCodeTotals = pageReport.codeNodesByDirective;
-    const pageliteralIncludeTotals = pageReport.literalIncludeCountByDirective;
-    //const pageioCodeBlockTotals = pageCounters.subtypeData[2];
     repoCodeNodeLangCounts = aggregateCodeCounts([
       pageReport.codeNodesByLang,
       repoCodeNodeLangCounts,
@@ -418,12 +416,13 @@ const buildRepoReport = async ({
     if (pageReport.warnings.length > 0) {
       pagesWithIssues.push(pageReport.page);
     }
-    pageReports.push(pageReport);
+    const serializedReport = serializePageCodeReport(pageReport);
+    serializedPageReports.push(serializedReport);
   }
 
   console.log(`Finished processing code examples for ${repoName}`);
 
-  await writePageReportToFile(repoName, pageReports);
+  await writePageReportToFile(repoName, serializedPageReports);
 
   const repoCodeNodeCountsAsArray = Array.from(
     repoCodeNodeLangCounts.entries()

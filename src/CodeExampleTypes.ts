@@ -73,6 +73,14 @@ export type PageSubtypeCodeExampleResults = {
   langMap: Map<string, number>;
 };
 
+function mapToObject(map: Map<string, number>): Record<string, number> {
+  const obj: Record<string, number> = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+}
+
 export type PageCodeReport = {
   page: string;
   codeNodesByDirective: number;
@@ -84,6 +92,32 @@ export type PageCodeReport = {
   warnings: string[];
 };
 
+export type SerializedPageCodeReport = {
+  page: string;
+  codeNodesByDirective: number;
+  codeNodesByLangSum: number;
+  codeNodesByLang: Record<string, number>;
+  literalIncludeCountByDirective: number;
+  literalIncludeCountByLangSum: number;
+  literalIncludesByLang: Record<string, number>;
+  warnings: string[];
+};
+
+export function serializePageCodeReport(
+  report: PageCodeReport
+): SerializedPageCodeReport {
+  return {
+    page: report.page,
+    codeNodesByDirective: report.codeNodesByDirective,
+    codeNodesByLangSum: report.codeNodesByLangSum,
+    codeNodesByLang: mapToObject(report.codeNodesByLang),
+    literalIncludeCountByDirective: report.literalIncludeCountByDirective,
+    literalIncludeCountByLangSum: report.literalIncludeCountByLangSum,
+    literalIncludesByLang: mapToObject(report.literalIncludesByLang),
+    warnings: report.warnings,
+  };
+}
+
 export type RepoCodeReport = {
   repo: string;
   totalCodeNodesByDirective: number;
@@ -94,3 +128,16 @@ export type RepoCodeReport = {
   literalIncludesByLang: Map<string, number>;
   pagesWithIssues: string[];
 };
+
+export function serializeRepoCodeReport(report: RepoCodeReport) {
+  return {
+    repo: report.repo,
+    totalCodeNodesByDirective: report.totalCodeNodesByDirective,
+    totalCodeNodesByLangSum: report.totalCodeNodesByLangSum,
+    codeNodesByLang: mapToObject(report.codeNodesByLang),
+    totalLiteralIncludesByDirective: report.totalLiteralIncludesByDirective,
+    totalLiteralIncludesByLangSum: report.totalLiteralIncludesByLangSum,
+    literalIncludesByLang: mapToObject(report.literalIncludesByLang),
+    pagesWithIssues: report.pagesWithIssues.entries(),
+  };
+}
