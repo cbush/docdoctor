@@ -128,3 +128,6 @@ build/
 
 # Generated files
 report-*.json
+
+# JetBrains Files
+.idea/

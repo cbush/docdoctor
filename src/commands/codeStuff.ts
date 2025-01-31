@@ -21,13 +21,16 @@ import {
   getLanguageDetailsForCodeNode,
   getLanguageDetailsForLiteralInclude,
   getLanguageDetailsForIoCodeBlock,
+  getNewDefaultLangCounterMap,
 } from "../CodeExampleLanguageProcessing";
 import {
   CodeNode,
   FindCodeExamplesArgs,
   BuildRepoReportArgs,
   IoCodeBlock,
-  PageSubtypeCodeExampleResults, PageCodeExampleResults
+  PageSubtypeCodeExampleResults,
+  PageCodeReport,
+  RepoCodeReport,
 } from "../CodeExampleTypes";
 
 const defaultSnootyDataApiBaseUrl = "https://snooty-data-api.mongodb.com/prod/";
@@ -97,34 +100,13 @@ const findCodeBlocks = (ast: ParentNode) => {
 const processCodeNodes = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
-  let blockCounter = 1;
-  const langCounters = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
+  let blockCounter = 0;
+  const langCounters = getNewDefaultLangCounterMap();
   const baseOutputDir = `output/code-example-blocks/${pageData.page_id}`;
   const codeNodes = findCodeBlocks(pageData.ast);
   const count = codeNodes.length;
   for (const codeNode of codeNodes) {
+    blockCounter += 1;
     const langDetails = getLanguageDetailsForCodeNode(codeNode);
     const currentLangValue = langCounters.get(langDetails.canonicalValue);
     if (!currentLangValue) {
@@ -137,40 +119,22 @@ const processCodeNodes = async (
       blockCounter.toString() + langDetails.extension
     );
     await writeCodeToFile(codeNode.value, baseOutputDir, filePath);
-    blockCounter += 1;
     //console.log(codeNode);
   }
   //console.log("Found %s code nodes on page", codeNodes.length);
-  return { nodeType: "code", count: count, langMap: langCounters };
+  return {
+    nodeType: "code",
+    nodeCount: count,
+    writeBlockCount: blockCounter,
+    langMap: langCounters,
+  };
 };
 
 const processLiteralIncludes = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
-  let blockCounter = 1;
-  const langCounters = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
+  const blockCounter = 0;
+  const langCounters = getNewDefaultLangCounterMap();
   const baseOutputDir = `output/code-example-blocks/${pageData.page_id}`;
   const literalIncludes = findDirectives(pageData.ast).filter(({ name }) =>
     name.includes("literalinclude")
@@ -188,21 +152,22 @@ const processLiteralIncludes = async (
       } else {
         langCounters.set(langDetails.canonicalValue, currentLangValue + 1);
       }
-      const filePath = path.join(
-        baseOutputDir,
-        blockCounter.toString() + langDetails.extension
-      );
-      await writeCodeToFile(
-        literalIncludeNode.children[0].value,
-        baseOutputDir,
-        filePath
-      );
-      blockCounter += 1;
+      // const filePath = path.join(
+      //   baseOutputDir,
+      //   blockCounter.toString() + langDetails.extension
+      // );
+      // await writeCodeToFile(
+      //   literalIncludeNode.children[0].value,
+      //   baseOutputDir,
+      //   filePath
+      // );
+      // blockCounter += 1;
     }
   }
   return {
     nodeType: "literalinclude",
-    count: literalIncludes.length,
+    nodeCount: literalIncludes.length,
+    writeBlockCount: blockCounter,
     langMap: langCounters,
   };
 };
@@ -211,29 +176,7 @@ const processIoCodeBlocks = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
   let blockCounter = 1;
-  const langCounters = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
+  const langCounters = getNewDefaultLangCounterMap();
   const baseOutputDir = `output/code-example-blocks/${pageData.page_id}`;
   const ioCodeBlocks = findDirectives(pageData.ast).filter(({ name }) =>
     name.includes("io-code-block")
@@ -245,7 +188,8 @@ const processIoCodeBlocks = async (
   if (ioCodeBlocks.length == 0) {
     return {
       nodeType: "io-code-block",
-      count: 0,
+      nodeCount: 0,
+      writeBlockCount: blockCounter,
       langMap: langCounters,
     };
   }
@@ -257,21 +201,54 @@ const processIoCodeBlocks = async (
     //console.log(inputBlock);
     const inputLangDetails = getLanguageDetailsForIoCodeBlock(inputBlock);
     //console.log("Input lang details are: %s", inputLangDetails);
+    const langCounterCurrentInputValue = langCounters.get(
+      inputLangDetails.canonicalValue
+    );
     // Output block is optional for io-code-block, so we can only assume it exists if the block has more than one child
-    if (ioBlock.children.length > 0) {
+    if (ioBlock.children.length > 1) {
       // If the output block does exist, it's the second child
       const maybeOutputBlock = ioBlock.children[1];
       if (maybeOutputBlock != undefined) {
+        //console.log(maybeOutputBlock);
         const outputLangDetails =
           getLanguageDetailsForIoCodeBlock(maybeOutputBlock);
         //console.log("Output lang details are: %s", outputLangDetails);
+        const langCounterCurrentOutputValue = langCounters.get(
+          outputLangDetails.canonicalValue
+        );
         if (
           inputLangDetails.canonicalValue !== outputLangDetails.canonicalValue
         ) {
-          langCounters.set(inputLangDetails.canonicalValue, 1);
-          langCounters.set(outputLangDetails.canonicalValue, 1);
+          // If the output lang and input lang aren't the same, we increment the counter by 1 for each
+          if (langCounterCurrentInputValue) {
+            const langCounterNewInputValue = langCounterCurrentInputValue + 1;
+            langCounters.set(
+              inputLangDetails.canonicalValue,
+              langCounterNewInputValue
+            );
+          } else if (langCounterCurrentInputValue === undefined) {
+            langCounters.set(inputLangDetails.canonicalValue, 1);
+          }
+          if (langCounterCurrentOutputValue) {
+            const langCounterNewOutputValue = langCounterCurrentOutputValue + 1;
+            langCounters.set(
+              inputLangDetails.canonicalValue,
+              langCounterNewOutputValue
+            );
+          } else if (langCounterCurrentOutputValue === undefined) {
+            langCounters.set(outputLangDetails.canonicalValue, 1);
+          }
         } else {
-          langCounters.set(inputLangDetails.canonicalValue, 2);
+          // If the output lang and input lang are the same, increment the counter once by 2 to represent both blocks
+          if (langCounterCurrentInputValue) {
+            const langCounterNewInputValue = langCounterCurrentInputValue + 2;
+            langCounters.set(
+              inputLangDetails.canonicalValue,
+              langCounterNewInputValue
+            );
+          } else if (langCounterCurrentInputValue === undefined) {
+            langCounters.set(inputLangDetails.canonicalValue, 2);
+          }
         }
         const outputFilePath = path.join(
           baseOutputDir,
@@ -285,6 +262,7 @@ const processIoCodeBlocks = async (
         blockCounter += 1;
         //console.log(maybeOutputBlock);
       } else {
+        // If there is no output block, we can only set the input lang count
         langCounters.set(inputLangDetails.canonicalValue, 1);
       }
       const inputFilePath = path.join(
@@ -301,7 +279,8 @@ const processIoCodeBlocks = async (
   }
   return {
     nodeType: "io-code-block",
-    count: ioCodeBlocks.length,
+    nodeCount: ioCodeBlocks.length,
+    writeBlockCount: blockCounter,
     langMap: langCounters,
   };
 };
@@ -323,108 +302,70 @@ const aggregateCodeCounts = (inputCounts: Map<string, number>[]) => {
 
 const processCodeExamples = async (
   pageData: SnootyPageData
-): Promise<PageCodeExampleResults> => {
+): Promise<PageCodeReport> => {
   const issues: string[] = [];
   //console.log("Processing code nodes for page: %s", pageData.page_id);
   const codeInfo = await processCodeNodes(pageData);
   const codeLanguageMapAsArray = Array.from(codeInfo.langMap);
-  const formattedCodeCounts = codeLanguageMapAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
   const codeCountsSum = codeLanguageMapAsArray.reduce(
     (sum, [, value]) => sum + value,
     0
   );
-  if (codeInfo.count != codeCountsSum) {
+  if (codeInfo.nodeCount != codeCountsSum) {
     issues.push(
-      `WARNING: code count is ${codeInfo.count} but code lang map sum is ${codeCountsSum}`
+      `WARNING: code count is ${codeInfo.nodeCount} but code lang map sum is ${codeCountsSum}`
+    );
+  }
+  if (codeInfo.nodeCount != codeInfo.writeBlockCount) {
+    issues.push(
+      `WARNING: code node count is ${codeInfo.nodeCount} but wrote ${codeInfo.writeBlockCount} code blocks`
     );
   }
   const literalIncludeCounts = await processLiteralIncludes(pageData);
   const literalIncludeCountsAsArray = Array.from(
     literalIncludeCounts.langMap.entries()
   );
-  const formattedLiteralIncludeCounts = literalIncludeCountsAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
   const literalIncludeCountsSum = literalIncludeCountsAsArray.reduce(
     (sum, [, value]) => sum + value,
     0
   );
-  if (literalIncludeCounts.count != literalIncludeCountsSum) {
+  if (literalIncludeCounts.nodeCount != literalIncludeCountsSum) {
     issues.push(
-      `WARNING: literalinclude count by directive is ${literalIncludeCounts.count} but literalinclude count by lang map sum is ${literalIncludeCountsSum}`
+      `WARNING: literalinclude count by directive is ${literalIncludeCounts.nodeCount} but literalinclude count by lang map sum is ${literalIncludeCountsSum}`
     );
   }
-  const ioCodeBlockCounts = await processIoCodeBlocks(pageData);
-  const ioCodeBlockCountsAsArray = Array.from(
-    ioCodeBlockCounts.langMap.entries()
-  );
-  const formattedIoCodeBlockCounts = ioCodeBlockCountsAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
-  const ioCodeBlockCountsSum = ioCodeBlockCountsAsArray.reduce(
-    (sum, [, value]) => sum + value,
-    0
-  );
-  if (ioCodeBlockCounts.count != ioCodeBlockCountsSum) {
-    issues.push(
-      `WARNING: io-code-block count by directive is ${ioCodeBlockCounts.count} but io-code-block count by lang map sum is ${ioCodeBlockCountsSum}`
-    );
-  }
-  const pageReportTemplate = `
-Report for page: ${pageData.page_id}
-Total code examples on page: ${codeInfo.count}
-No warnings for this page
+  // if (literalIncludeCounts.nodeCount != literalIncludeCounts.writeBlockCount) {
+  //   issues.push(
+  //     `WARNING: literalinclude count by node count is ${literalIncludeCounts.nodeCount} but wrote ${literalIncludeCounts.writeBlockCount} code blocks`
+  //   );
+  // }
+  // const ioCodeBlockCounts = await processIoCodeBlocks(pageData);
+  // const ioCodeBlockCountsAsArray = Array.from(
+  //   ioCodeBlockCounts.langMap.entries()
+  // );
+  // const formattedIoCodeBlockCounts = ioCodeBlockCountsAsArray
+  //   .map(([key, value]) => `${key}: ${value}`)
+  //   .join("\n");
+  // const ioCodeBlockCountsSum = ioCodeBlockCountsAsArray.reduce(
+  //   (sum, [, value]) => sum + value,
+  //   0
+  // );
+  // if (ioCodeBlockCounts.count != ioCodeBlockCountsSum) {
+  //   issues.push(
+  //     `WARNING: io-code-block count by directive is ${ioCodeBlockCounts.count} but io-code-block count by lang map sum is ${ioCodeBlockCountsSum}`
+  //   );
+  // }
 
-code counts for page by directive count: ${codeInfo.count}
-code counts for page by language sum: ${codeCountsSum}
-${formattedCodeCounts}
-
-literalinclude counts for page by directive count: ${literalIncludeCounts.count}
-literalinclude counts for page by language sum: ${literalIncludeCountsSum}
-${formattedLiteralIncludeCounts}
-
-io-code-block counts for page by directive count: ${ioCodeBlockCounts.count}
-io-code-block counts for page by language sum: ${ioCodeBlockCountsSum}
-${formattedIoCodeBlockCounts}
-  `;
-  const pageReportTemplateWithWarnings = `
-Report for page: ${pageData.page_id}
-Total code examples on page: ${codeInfo.count}
-This page has the following warnings:
-${issues.toString()}
-
-code counts for page by directive count: ${codeInfo.count}
-code counts for page by language sum: ${codeCountsSum}
-${formattedCodeCounts}
-
-literalinclude counts for page by directive count: ${literalIncludeCounts.count}
-literalinclude counts for page by language sum: ${literalIncludeCountsSum}
-${formattedLiteralIncludeCounts}
-
-io-code-block counts for page by directive count: ${ioCodeBlockCounts.count}
-io-code-block counts for page by language sum: ${ioCodeBlockCountsSum}
-${formattedIoCodeBlockCounts}
-  `;
-
-  //console.log(pageReportTemplate);
-  if (issues.length > 0) {
-    await writePageReportToFile(
-      pageData.page_id,
-      pageReportTemplateWithWarnings
-    );
-    return {
-      subtypeData: [codeInfo, literalIncludeCounts, ioCodeBlockCounts],
-      hasIssues: true,
-    };
-  } else {
-    await writePageReportToFile(pageData.page_id, pageReportTemplate);
-    return {
-      subtypeData: [codeInfo, literalIncludeCounts, ioCodeBlockCounts],
-      hasIssues: false,
-    };
-  }
+  return {
+    page: pageData.page_id.toString(),
+    codeNodesByDirective: codeInfo.nodeCount,
+    codeNodesByLangSum: codeCountsSum,
+    codeNodesByLang: codeInfo.langMap,
+    literalIncludeCountByDirective: literalIncludeCounts.nodeCount,
+    literalIncludeCountByLangSum: literalIncludeCountsSum,
+    literalIncludesByLang: literalIncludeCounts.langMap,
+    warnings: issues,
+  };
 };
 
 const buildRepoReport = async ({
@@ -444,164 +385,82 @@ const buildRepoReport = async ({
   });
   const pagesWithIssues: string[] = [];
 
-  let repoCodeNodeLangCounts = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
+  let repoCodeNodeLangCounts = getNewDefaultLangCounterMap();
   let repoCodeNodeTotal = 0;
 
-  let repoLiteralIncludeLangCounts = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
+  let repoLiteralIncludeLangCounts = getNewDefaultLangCounterMap();
   let repoLiteralIncludeTotal = 0;
 
-  let repoIoCodeBlockLangCounts = new Map<string, number>([
-    [CanonicalLanguageValues.BASH, 0],
-    [CanonicalLanguageValues.C, 0],
-    [CanonicalLanguageValues.CPP, 0],
-    [CanonicalLanguageValues.CSHARP, 0],
-    [CanonicalLanguageValues.GO, 0],
-    [CanonicalLanguageValues.JAVA, 0],
-    [CanonicalLanguageValues.JAVASCRIPT, 0],
-    [CanonicalLanguageValues.JSON, 0],
-    [CanonicalLanguageValues.KOTLIN, 0],
-    [CanonicalLanguageValues.PHP, 0],
-    [CanonicalLanguageValues.PYTHON, 0],
-    [CanonicalLanguageValues.RUBY, 0],
-    [CanonicalLanguageValues.RUST, 0],
-    [CanonicalLanguageValues.SCALA, 0],
-    [CanonicalLanguageValues.SHELL, 0],
-    [CanonicalLanguageValues.SWIFT, 0],
-    [CanonicalLanguageValues.TEXT, 0],
-    [CanonicalLanguageValues.TYPESCRIPT, 0],
-    [CanonicalLanguageValues.UNDEFINED, 0],
-    [CanonicalLanguageValues.XML, 0],
-    [CanonicalLanguageValues.YAML, 0],
-  ]);
-  let repoIoCodeBlockTotal = 0;
+  // let repoIoCodeBlockLangCounts = getNewLangCounterMap();
+  // let repoIoCodeBlockTotal = 0;
 
+  const pageReports: PageCodeReport[] = [];
   for (const thisPage of pageData) {
-    const pageCounters = await processCodeExamples(thisPage);
-    const pageCodeTotals = pageCounters.subtypeData[0];
-    const pageliteralIncludeTotals = pageCounters.subtypeData[1];
-    const pageioCodeBlockTotals = pageCounters.subtypeData[2];
+    const pageReport = await processCodeExamples(thisPage);
+    const pageCodeTotals = pageReport.codeNodesByDirective;
+    const pageliteralIncludeTotals = pageReport.literalIncludeCountByDirective;
+    //const pageioCodeBlockTotals = pageCounters.subtypeData[2];
     repoCodeNodeLangCounts = aggregateCodeCounts([
-      pageCodeTotals.langMap,
+      pageReport.codeNodesByLang,
       repoCodeNodeLangCounts,
     ]);
     repoLiteralIncludeLangCounts = aggregateCodeCounts([
-      pageliteralIncludeTotals.langMap,
+      pageReport.literalIncludesByLang,
       repoLiteralIncludeLangCounts,
     ]);
-    repoIoCodeBlockLangCounts = aggregateCodeCounts([
-      pageioCodeBlockTotals.langMap,
-      repoIoCodeBlockLangCounts,
-    ]);
-    repoCodeNodeTotal += pageCodeTotals.count;
-    repoLiteralIncludeTotal += pageliteralIncludeTotals.count;
-    repoIoCodeBlockTotal += pageioCodeBlockTotals.count;
-    if (pageCounters.hasIssues) {
-      pagesWithIssues.push(thisPage.page_id.toString());
+    // repoIoCodeBlockLangCounts = aggregateCodeCounts([
+    //   pageioCodeBlockTotals.langMap,
+    //   repoIoCodeBlockLangCounts,
+    // ]);
+    repoCodeNodeTotal += pageReport.codeNodesByDirective;
+    repoLiteralIncludeTotal += pageReport.literalIncludeCountByDirective;
+    //repoIoCodeBlockTotal += pageioCodeBlockTotals.count;
+    if (pageReport.warnings.length > 0) {
+      pagesWithIssues.push(pageReport.page);
     }
-    //break;
+    pageReports.push(pageReport);
   }
 
   console.log(`Finished processing code examples for ${repoName}`);
 
-  // Write output to individual output files
+  await writePageReportToFile(repoName, pageReports);
+
   const repoCodeNodeCountsAsArray = Array.from(
     repoCodeNodeLangCounts.entries()
   );
-  const formattedRepoCounts = repoCodeNodeCountsAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
   const totalCodeExamplesSum = repoCodeNodeCountsAsArray.reduce(
     (sum, [, value]) => sum + value,
     0
   );
-
+  //
   const repoLiteralIncludeCountsAsArray = Array.from(
     repoLiteralIncludeLangCounts.entries()
   );
-  const formattedRepoLiteralIncludeCounts = repoLiteralIncludeCountsAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
   const repoTotalLiteralIncludesSum = repoLiteralIncludeCountsAsArray.reduce(
     (sum, [, value]) => sum + value,
     0
   );
 
-  const repoIoCodeBlockCountsAsArray = Array.from(
-    repoIoCodeBlockLangCounts.entries()
-  );
-  const formattedRepoIoCodeBlockCounts = repoIoCodeBlockCountsAsArray
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
-  const repoTotalIoCodeBlocksSum = repoIoCodeBlockCountsAsArray.reduce(
-    (sum, [, value]) => sum + value,
-    0
-  );
+  // const repoIoCodeBlockCountsAsArray = Array.from(
+  //   repoIoCodeBlockLangCounts.entries()
+  // );
+  // const repoTotalIoCodeBlocksSum = repoIoCodeBlockCountsAsArray.reduce(
+  //   (sum, [, value]) => sum + value,
+  //   0
+  // );
 
-  const repoReportTemplate = `
-Report for repository: ${repoName}
-Total code blocks by directive count: ${repoCodeNodeTotal}
-Total code blocks by lang sum: ${totalCodeExamplesSum}
-Code blocks by language:
-${formattedRepoCounts}
+  const repoReport: RepoCodeReport = {
+    repo: repoName,
+    totalCodeNodesByDirective: repoCodeNodeTotal,
+    totalCodeNodesByLangSum: totalCodeExamplesSum,
+    codeNodesByLang: repoCodeNodeLangCounts,
+    totalLiteralIncludesByDirective: repoLiteralIncludeTotal,
+    totalLiteralIncludesByLangSum: repoTotalLiteralIncludesSum,
+    literalIncludesByLang: repoLiteralIncludeLangCounts,
+    pagesWithIssues: pagesWithIssues,
+  };
 
-Total literalincludes by directive count: ${repoLiteralIncludeTotal}
-Total literalincludes by lang sum: ${repoTotalLiteralIncludesSum}
-literalincludes by language:
-${formattedRepoLiteralIncludeCounts}
-
-Total io-code-blocks by directive count: ${repoIoCodeBlockTotal}
-Total io-code-blocks by lang sum: ${repoTotalIoCodeBlocksSum}
-io-code-blocks by language:
-${formattedRepoIoCodeBlockCounts}
-
-There have been issues parsing code examples on the following pages - please consult the page report for details:
-${pagesWithIssues.toString().split(",").join("\n")}
-  `;
-  await writeRepoReportToFile(repoName, repoReportTemplate);
+  await writeRepoReportToFile(repoReport);
 };
 
 const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {

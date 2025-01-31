@@ -68,11 +68,29 @@ export type BuildRepoReportArgs = {
 
 export type PageSubtypeCodeExampleResults = {
   nodeType: string;
-  count: number;
+  nodeCount: number;
+  writeBlockCount: number;
   langMap: Map<string, number>;
 };
 
-export type PageCodeExampleResults = {
-  subtypeData: PageSubtypeCodeExampleResults[];
-  hasIssues: boolean;
+export type PageCodeReport = {
+  page: string;
+  codeNodesByDirective: number;
+  codeNodesByLangSum: number;
+  codeNodesByLang: Map<string, number>;
+  literalIncludeCountByDirective: number;
+  literalIncludeCountByLangSum: number;
+  literalIncludesByLang: Map<string, number>;
+  warnings: string[];
+};
+
+export type RepoCodeReport = {
+  repo: string;
+  totalCodeNodesByDirective: number;
+  totalCodeNodesByLangSum: number;
+  codeNodesByLang: Map<string, number>;
+  totalLiteralIncludesByDirective: number;
+  totalLiteralIncludesByLangSum: number;
+  literalIncludesByLang: Map<string, number>;
+  pagesWithIssues: string[];
 };

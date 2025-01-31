@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import * as path from "path";
+import { PageCodeReport, RepoCodeReport } from "./CodeExampleTypes";
 
 // Get the code blocks on a given page
 export const writeCodeToFile = async (
@@ -16,11 +17,13 @@ export const writeCodeToFile = async (
 };
 
 export const writeRepoReportToFile = async (
-  repoName: string,
-  jsonString: string
+  repoCodeReport: RepoCodeReport,
 ) => {
-  const outputPath = `output/code-example-reports/report-${repoName}.txt`;
+  const outputBaseDir = `output/code-example-reports/`;
+  const outputPath = `output/code-example-reports/report-${repoCodeReport.repo}.txt`;
   try {
+    const jsonString = JSON.stringify(repoCodeReport);
+    await fs.mkdir(outputBaseDir, { recursive: true });
     await fs.writeFile(outputPath, jsonString, "utf-8");
   } catch (error) {
     console.log("Error writing report to file: %s", error);
@@ -29,15 +32,15 @@ export const writeRepoReportToFile = async (
 };
 
 export const writePageReportToFile = async (
-  pagePath: string,
-  jsonString: string
+  repoName: string,
+  pageCodeReport: PageCodeReport[]
 ) => {
   const outputBaseDir = `output/code-example-reports/`;
-  const baseDir = `${outputBaseDir}/${pagePath}`;
-  const filePath = `${baseDir}/report.txt`;
+  const outputPath = `output/code-example-reports/report-${repoName}-pages.txt`;
   try {
-    await fs.mkdir(baseDir, { recursive: true });
-    await fs.writeFile(filePath, jsonString, "utf-8");
+    await fs.mkdir(outputBaseDir, { recursive: true });
+    const jsonString = JSON.stringify(pageCodeReport);
+    await fs.writeFile(outputPath, jsonString, "utf-8");
   } catch (error) {
     console.log("Error writing report to file: %s", error);
     process.exit(1);

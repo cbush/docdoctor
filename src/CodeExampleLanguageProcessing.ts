@@ -348,3 +348,29 @@ export const getLanguageDetailsForIoCodeBlock = (
     };
   }
 };
+
+export const getNewDefaultLangCounterMap = (): Map<string, number> => {
+  return new Map<string, number>([
+    [CanonicalLanguageValues.BASH, 0],
+    [CanonicalLanguageValues.C, 0],
+    [CanonicalLanguageValues.CPP, 0],
+    [CanonicalLanguageValues.CSHARP, 0],
+    [CanonicalLanguageValues.GO, 0],
+    [CanonicalLanguageValues.JAVA, 0],
+    [CanonicalLanguageValues.JAVASCRIPT, 0],
+    [CanonicalLanguageValues.JSON, 0],
+    [CanonicalLanguageValues.KOTLIN, 0],
+    [CanonicalLanguageValues.PHP, 0],
+    [CanonicalLanguageValues.PYTHON, 0],
+    [CanonicalLanguageValues.RUBY, 0],
+    [CanonicalLanguageValues.RUST, 0],
+    [CanonicalLanguageValues.SCALA, 0],
+    [CanonicalLanguageValues.SHELL, 0],
+    [CanonicalLanguageValues.SWIFT, 0],
+    [CanonicalLanguageValues.TEXT, 0],
+    [CanonicalLanguageValues.TYPESCRIPT, 0],
+    [CanonicalLanguageValues.UNDEFINED, 0],
+    [CanonicalLanguageValues.XML, 0],
+    [CanonicalLanguageValues.YAML, 0],
+  ]);
+};
