@@ -501,16 +501,22 @@ const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {
         } else if (ignoreList.includes(projectName)) {
           console.log(`Ignoring project ${projectName}`);
           continue;
-        }
-
-        // SIMPLIFIED TESTING TARGETING ONE REPO
-        if (projectName === "cloud-docs") {
+        } else {
           await buildRepoReport({
             snootyProjectsInfo,
             repoName: project.repoName,
             projectName,
           });
         }
+
+        // SIMPLIFIED TESTING TARGETING ONE REPO
+        // if (projectName === "cloud-docs") {
+        //   await buildRepoReport({
+        //     snootyProjectsInfo,
+        //     repoName: project.repoName,
+        //     projectName,
+        //   });
+        // }
       }
     } catch (error) {
       console.error(error);
