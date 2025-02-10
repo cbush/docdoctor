@@ -257,7 +257,7 @@ export const getLanguageDetailsForLiteralInclude = (
   node: DirectiveNode
 ): LanguageMapper => {
   const maybeChildNode = node.children[0] as CodeNode;
-  const maybeNodeChildLang = maybeChildNode.lang;
+  const maybeNodeChildLang = maybeChildNode?.lang;
   if (maybeNodeChildLang != null) {
     const language: string = maybeNodeChildLang as string;
     const mapping = languageValueMappings.find(

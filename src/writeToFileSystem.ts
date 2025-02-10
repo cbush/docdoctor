@@ -28,7 +28,7 @@ export const writeRepoReportToFile = async (repoCodeReport: RepoCodeReport) => {
     await fs.mkdir(outputBaseDir, { recursive: true });
     await fs.writeFile(outputPath, jsonString, "utf-8");
   } catch (error) {
-    console.log("Error writing report to file: %s", error);
+    console.error("Error writing report to file: %s", error);
     process.exit(1);
   }
 };
@@ -44,7 +44,7 @@ export const writePageReportToFile = async (
     const jsonString = JSON.stringify(pageCodeReport, null, 2);
     await fs.writeFile(outputPath, jsonString, "utf-8");
   } catch (error) {
-    console.log("Error writing report to file: %s", error);
+    console.error("Error writing report to file: %s", error);
     process.exit(1);
   }
 };
