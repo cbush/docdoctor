@@ -126,8 +126,5 @@ build/
 # vscode
 .vscode/
 
-# Generated files
-report-*.json
-
 # JetBrains Files
 .idea/
