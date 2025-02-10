@@ -228,11 +228,6 @@ export const languageValueMappings: LanguageMapper[] = [
   },
 ];
 
-export type LanguageCount = {
-  language: string;
-  count: number;
-};
-
 export const getLanguageDetailsForCodeNode = (
   node: CodeNode
 ): LanguageMapper => {

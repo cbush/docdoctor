@@ -89,6 +89,9 @@ export type PageCodeReport = {
   literalIncludeCountByDirective: number;
   literalIncludeCountByLangSum: number;
   literalIncludesByLang: Map<string, number>;
+  ioCodeBlockCountByDirective: number;
+  ioCodeBlockCountByLangSum: number;
+  ioCodeBlockByLang: Map<string, number>;
   warnings: string[];
 };
 
@@ -100,6 +103,9 @@ export type SerializedPageCodeReport = {
   literalIncludeCountByDirective: number;
   literalIncludeCountByLangSum: number;
   literalIncludesByLang: Record<string, number>;
+  ioCodeBlockCountByDirective: number;
+  ioCodeBlockCountByLangSum: number;
+  ioCodeBlockByLang: Record<string, number>;
   warnings: string[];
 };
 
@@ -114,6 +120,9 @@ export function serializePageCodeReport(
     literalIncludeCountByDirective: report.literalIncludeCountByDirective,
     literalIncludeCountByLangSum: report.literalIncludeCountByLangSum,
     literalIncludesByLang: mapToObject(report.literalIncludesByLang),
+    ioCodeBlockCountByDirective: report.ioCodeBlockCountByDirective,
+    ioCodeBlockCountByLangSum: report.ioCodeBlockCountByLangSum,
+    ioCodeBlockByLang: mapToObject(report.ioCodeBlockByLang),
     warnings: report.warnings,
   };
 }
@@ -126,6 +135,9 @@ export type RepoCodeReport = {
   totalLiteralIncludesByDirective: number;
   totalLiteralIncludesByLangSum: number;
   literalIncludesByLang: Map<string, number>;
+  ioCodeBlockCountByDirective: number;
+  ioCodeBlockCountByLangSum: number;
+  ioCodeBlockByLang: Map<string, number>;
   pagesWithIssues: string[];
 };
 
@@ -138,6 +150,9 @@ export function serializeRepoCodeReport(report: RepoCodeReport) {
     totalLiteralIncludesByDirective: report.totalLiteralIncludesByDirective,
     totalLiteralIncludesByLangSum: report.totalLiteralIncludesByLangSum,
     literalIncludesByLang: mapToObject(report.literalIncludesByLang),
+    ioCodeBlockCountByDirective: report.ioCodeBlockCountByDirective,
+    ioCodeBlockCountByLangSum: report.ioCodeBlockCountByLangSum,
+    ioCodeBlockByLang: mapToObject(report.ioCodeBlockByLang),
     pagesWithIssues: report.pagesWithIssues.entries(),
   };
 }

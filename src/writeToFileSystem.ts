@@ -1,5 +1,4 @@
 import { promises as fs } from "fs";
-import * as path from "path";
 import {
   SerializedPageCodeReport,
   RepoCodeReport,
@@ -20,9 +19,7 @@ export const writeCodeToFile = async (
   }
 };
 
-export const writeRepoReportToFile = async (
-  repoCodeReport: RepoCodeReport,
-) => {
+export const writeRepoReportToFile = async (repoCodeReport: RepoCodeReport) => {
   const outputBaseDir = `output/code-example-reports/`;
   const outputPath = `output/code-example-reports/report-${repoCodeReport.repo}.json`;
   const serializedReport = serializeRepoCodeReport(repoCodeReport);

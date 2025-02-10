@@ -17,7 +17,6 @@ import {
 } from "../writeToFileSystem";
 import { findDirectives } from "../workWithDirectives";
 import {
-  CanonicalLanguageValues,
   getLanguageDetailsForCodeNode,
   getLanguageDetailsForLiteralInclude,
   getLanguageDetailsForIoCodeBlock,
@@ -31,7 +30,8 @@ import {
   PageSubtypeCodeExampleResults,
   PageCodeReport,
   SerializedPageCodeReport,
-  RepoCodeReport, serializePageCodeReport
+  RepoCodeReport,
+  serializePageCodeReport,
 } from "../CodeExampleTypes";
 
 const defaultSnootyDataApiBaseUrl = "https://snooty-data-api.mongodb.com/prod/";
@@ -120,9 +120,7 @@ const processCodeNodes = async (
       blockCounter.toString() + langDetails.extension
     );
     await writeCodeToFile(codeNode.value, baseOutputDir, filePath);
-    //console.log(codeNode);
   }
-  //console.log("Found %s code nodes on page", codeNodes.length);
   return {
     nodeType: "code",
     nodeCount: count,
@@ -136,7 +134,6 @@ const processLiteralIncludes = async (
 ): Promise<PageSubtypeCodeExampleResults> => {
   const blockCounter = 0;
   const langCounters = getNewDefaultLangCounterMap();
-  const baseOutputDir = `output/code-example-blocks/${pageData.page_id}`;
   const literalIncludes = findDirectives(pageData.ast).filter(({ name }) =>
     name.includes("literalinclude")
   );
@@ -153,16 +150,6 @@ const processLiteralIncludes = async (
       } else {
         langCounters.set(langDetails.canonicalValue, currentLangValue + 1);
       }
-      // const filePath = path.join(
-      //   baseOutputDir,
-      //   blockCounter.toString() + langDetails.extension
-      // );
-      // await writeCodeToFile(
-      //   literalIncludeNode.children[0].value,
-      //   baseOutputDir,
-      //   filePath
-      // );
-      // blockCounter += 1;
     }
   }
   return {
@@ -176,16 +163,11 @@ const processLiteralIncludes = async (
 const processIoCodeBlocks = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
-  let blockCounter = 1;
+  const blockCounter = 0;
   const langCounters = getNewDefaultLangCounterMap();
-  const baseOutputDir = `output/code-example-blocks/${pageData.page_id}`;
   const ioCodeBlocks = findDirectives(pageData.ast).filter(({ name }) =>
     name.includes("io-code-block")
   );
-  // console.log(
-  //   "Found %s io-code-block directives for page",
-  //   ioCodeBlocks.length
-  // );
   if (ioCodeBlocks.length == 0) {
     return {
       nodeType: "io-code-block",
@@ -196,86 +178,21 @@ const processIoCodeBlocks = async (
   }
   for (const codeBlock of ioCodeBlocks) {
     const ioBlock = codeBlock as IoCodeBlock;
-    //console.log(ioBlock);
-    // The io-code-block directive always has at least one child, and it's an input block
+    // The first child of an io-code-block directive is the `input` directive
     const inputBlock = ioBlock.children[0];
-    //console.log(inputBlock);
     const inputLangDetails = getLanguageDetailsForIoCodeBlock(inputBlock);
-    //console.log("Input lang details are: %s", inputLangDetails);
     const langCounterCurrentInputValue = langCounters.get(
       inputLangDetails.canonicalValue
     );
-    // Output block is optional for io-code-block, so we can only assume it exists if the block has more than one child
-    if (ioBlock.children.length > 1) {
-      // If the output block does exist, it's the second child
-      const maybeOutputBlock = ioBlock.children[1];
-      if (maybeOutputBlock != undefined) {
-        //console.log(maybeOutputBlock);
-        const outputLangDetails =
-          getLanguageDetailsForIoCodeBlock(maybeOutputBlock);
-        //console.log("Output lang details are: %s", outputLangDetails);
-        const langCounterCurrentOutputValue = langCounters.get(
-          outputLangDetails.canonicalValue
-        );
-        if (
-          inputLangDetails.canonicalValue !== outputLangDetails.canonicalValue
-        ) {
-          // If the output lang and input lang aren't the same, we increment the counter by 1 for each
-          if (langCounterCurrentInputValue) {
-            const langCounterNewInputValue = langCounterCurrentInputValue + 1;
-            langCounters.set(
-              inputLangDetails.canonicalValue,
-              langCounterNewInputValue
-            );
-          } else if (langCounterCurrentInputValue === undefined) {
-            langCounters.set(inputLangDetails.canonicalValue, 1);
-          }
-          if (langCounterCurrentOutputValue) {
-            const langCounterNewOutputValue = langCounterCurrentOutputValue + 1;
-            langCounters.set(
-              inputLangDetails.canonicalValue,
-              langCounterNewOutputValue
-            );
-          } else if (langCounterCurrentOutputValue === undefined) {
-            langCounters.set(outputLangDetails.canonicalValue, 1);
-          }
-        } else {
-          // If the output lang and input lang are the same, increment the counter once by 2 to represent both blocks
-          if (langCounterCurrentInputValue) {
-            const langCounterNewInputValue = langCounterCurrentInputValue + 2;
-            langCounters.set(
-              inputLangDetails.canonicalValue,
-              langCounterNewInputValue
-            );
-          } else if (langCounterCurrentInputValue === undefined) {
-            langCounters.set(inputLangDetails.canonicalValue, 2);
-          }
-        }
-        const outputFilePath = path.join(
-          baseOutputDir,
-          blockCounter.toString() + outputLangDetails.extension
-        );
-        await writeCodeToFile(
-          maybeOutputBlock.children[0].value,
-          baseOutputDir,
-          outputFilePath
-        );
-        blockCounter += 1;
-        //console.log(maybeOutputBlock);
-      } else {
-        // If there is no output block, we can only set the input lang count
-        langCounters.set(inputLangDetails.canonicalValue, 1);
-      }
-      const inputFilePath = path.join(
-        baseOutputDir,
-        blockCounter.toString() + inputLangDetails.extension
+    // If the lang exists in the map and currently has a value, increment it by one
+    if (langCounterCurrentInputValue != undefined) {
+      langCounters.set(
+        inputLangDetails.canonicalValue,
+        langCounterCurrentInputValue + 1
       );
-      await writeCodeToFile(
-        inputBlock.children[0].value,
-        baseOutputDir,
-        inputFilePath
-      );
-      blockCounter += 1;
+    } else {
+      // If the lang doesn't currently exist in the map and have a value, add it and set its value to one
+      langCounters.set(inputLangDetails.canonicalValue, 1);
     }
   }
   return {
@@ -305,7 +222,6 @@ const processCodeExamples = async (
   pageData: SnootyPageData
 ): Promise<PageCodeReport> => {
   const issues: string[] = [];
-  //console.log("Processing code nodes for page: %s", pageData.page_id);
   const codeInfo = await processCodeNodes(pageData);
   const codeLanguageMapAsArray = Array.from(codeInfo.langMap);
   const codeCountsSum = codeLanguageMapAsArray.reduce(
@@ -335,27 +251,19 @@ const processCodeExamples = async (
       `WARNING: literalinclude count by directive is ${literalIncludeCounts.nodeCount} but literalinclude count by lang map sum is ${literalIncludeCountsSum}`
     );
   }
-  // if (literalIncludeCounts.nodeCount != literalIncludeCounts.writeBlockCount) {
-  //   issues.push(
-  //     `WARNING: literalinclude count by node count is ${literalIncludeCounts.nodeCount} but wrote ${literalIncludeCounts.writeBlockCount} code blocks`
-  //   );
-  // }
-  // const ioCodeBlockCounts = await processIoCodeBlocks(pageData);
-  // const ioCodeBlockCountsAsArray = Array.from(
-  //   ioCodeBlockCounts.langMap.entries()
-  // );
-  // const formattedIoCodeBlockCounts = ioCodeBlockCountsAsArray
-  //   .map(([key, value]) => `${key}: ${value}`)
-  //   .join("\n");
-  // const ioCodeBlockCountsSum = ioCodeBlockCountsAsArray.reduce(
-  //   (sum, [, value]) => sum + value,
-  //   0
-  // );
-  // if (ioCodeBlockCounts.count != ioCodeBlockCountsSum) {
-  //   issues.push(
-  //     `WARNING: io-code-block count by directive is ${ioCodeBlockCounts.count} but io-code-block count by lang map sum is ${ioCodeBlockCountsSum}`
-  //   );
-  // }
+  const ioCodeBlockCounts = await processIoCodeBlocks(pageData);
+  const ioCodeBlockCountsAsArray = Array.from(
+    ioCodeBlockCounts.langMap.entries()
+  );
+  const ioCodeBlockCountsSum = ioCodeBlockCountsAsArray.reduce(
+    (sum, [, value]) => sum + value,
+    0
+  );
+  if (ioCodeBlockCounts.nodeCount != ioCodeBlockCountsSum) {
+    issues.push(
+      `WARNING: io-code-block count by directive is ${ioCodeBlockCounts.nodeCount} but io-code-block count by lang map sum is ${ioCodeBlockCountsSum}`
+    );
+  }
 
   return {
     page: pageData.page_id.toString(),
@@ -365,6 +273,9 @@ const processCodeExamples = async (
     literalIncludeCountByDirective: literalIncludeCounts.nodeCount,
     literalIncludeCountByLangSum: literalIncludeCountsSum,
     literalIncludesByLang: literalIncludeCounts.langMap,
+    ioCodeBlockCountByDirective: ioCodeBlockCounts.nodeCount,
+    ioCodeBlockCountByLangSum: ioCodeBlockCountsSum,
+    ioCodeBlockByLang: ioCodeBlockCounts.langMap,
     warnings: issues,
   };
 };
@@ -392,8 +303,8 @@ const buildRepoReport = async ({
   let repoLiteralIncludeLangCounts = getNewDefaultLangCounterMap();
   let repoLiteralIncludeTotal = 0;
 
-  // let repoIoCodeBlockLangCounts = getNewLangCounterMap();
-  // let repoIoCodeBlockTotal = 0;
+  let repoIoCodeBlockLangCounts = getNewDefaultLangCounterMap();
+  let repoIoCodeBlockTotal = 0;
 
   const serializedPageReports: SerializedPageCodeReport[] = [];
   for (const thisPage of pageData) {
@@ -406,13 +317,13 @@ const buildRepoReport = async ({
       pageReport.literalIncludesByLang,
       repoLiteralIncludeLangCounts,
     ]);
-    // repoIoCodeBlockLangCounts = aggregateCodeCounts([
-    //   pageioCodeBlockTotals.langMap,
-    //   repoIoCodeBlockLangCounts,
-    // ]);
+    repoIoCodeBlockLangCounts = aggregateCodeCounts([
+      pageReport.ioCodeBlockByLang,
+      repoIoCodeBlockLangCounts,
+    ]);
     repoCodeNodeTotal += pageReport.codeNodesByDirective;
     repoLiteralIncludeTotal += pageReport.literalIncludeCountByDirective;
-    //repoIoCodeBlockTotal += pageioCodeBlockTotals.count;
+    repoIoCodeBlockTotal += pageReport.ioCodeBlockCountByDirective;
     if (pageReport.warnings.length > 0) {
       pagesWithIssues.push(pageReport.page);
     }
@@ -440,13 +351,13 @@ const buildRepoReport = async ({
     0
   );
 
-  // const repoIoCodeBlockCountsAsArray = Array.from(
-  //   repoIoCodeBlockLangCounts.entries()
-  // );
-  // const repoTotalIoCodeBlocksSum = repoIoCodeBlockCountsAsArray.reduce(
-  //   (sum, [, value]) => sum + value,
-  //   0
-  // );
+  const repoIoCodeBlockCountsAsArray = Array.from(
+    repoIoCodeBlockLangCounts.entries()
+  );
+  const repoIoCodeBlocksSum = repoIoCodeBlockCountsAsArray.reduce(
+    (sum, [, value]) => sum + value,
+    0
+  );
 
   const repoReport: RepoCodeReport = {
     repo: repoName,
@@ -456,6 +367,9 @@ const buildRepoReport = async ({
     totalLiteralIncludesByDirective: repoLiteralIncludeTotal,
     totalLiteralIncludesByLangSum: repoTotalLiteralIncludesSum,
     literalIncludesByLang: repoLiteralIncludeLangCounts,
+    ioCodeBlockCountByDirective: repoIoCodeBlockTotal,
+    ioCodeBlockCountByLangSum: repoIoCodeBlocksSum,
+    ioCodeBlockByLang: repoIoCodeBlockLangCounts,
     pagesWithIssues: pagesWithIssues,
   };
 
@@ -463,7 +377,7 @@ const buildRepoReport = async ({
 };
 
 const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {
-  command: "codeStuff",
+  command: "getCodeExamples",
   handler: async (args) => {
     try {
       const { snootyDataApiBaseUrl } = {
