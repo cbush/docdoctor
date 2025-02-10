@@ -20,7 +20,7 @@ node ./build/main --help
 The `getReadabilityText` command takes file paths as arguments, delimited
 by spaces. Pass in a snooty.toml with the flag `--snootyTomlPath`.
 
-This command parses traverses nodes in each file to convert the rst to plain
+This command parses nodes in each file to convert the rst to plain
 text. It outputs the plain text for each file as a new file in an `output`
 directory, using the same name and directory structure as the input path.
 
@@ -36,4 +36,20 @@ Usage Example:
 
 ```shell
 node ./build/main getReadabilityText test/readability/delete-a-realm.txt --snootyTomlPath=test/readability/snooty.toml
+```
+
+### Get Code Examples
+
+The `getCodeExamples` command:
+
+- Gets all code nodes, literalinclude nodes, and iocodeblock nodes in a subset of projects using the Snooty API
+- Gets language details about each node
+- Writes the individual code nodes to files in `output/code-example-blocks` for a separate categorization step
+- Writes reports for each repo summarizing the details and listing details for each page to files in
+  `output/code-example-reports` for aggregation and further processing
+
+Usage Example:
+
+```shell
+node ./build/main getCodeExamples
 ```

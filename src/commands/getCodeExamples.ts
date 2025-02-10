@@ -36,6 +36,7 @@ import {
 
 const defaultSnootyDataApiBaseUrl = "https://snooty-data-api.mongodb.com/prod/";
 
+// Get data for each page in the given project/repo from the Snooty API
 const fetchPageData = async (args: {
   branchName: string;
   projectName: string;
@@ -98,6 +99,8 @@ const findCodeBlocks = (ast: ParentNode) => {
   ); // exclude self
 };
 
+// Get language details for every `code` node on a given page, and write the contents of each
+// code node to file for a separate categorization step.
 const processCodeNodes = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
@@ -129,6 +132,10 @@ const processCodeNodes = async (
   };
 };
 
+/* Get language details for every `literalinclude` node on a given page.
+ * We don't need to write the nodes to file for categorization as they are a subset of `code` node, so
+ * writing the `code` nodes to files covers any `literalinclude` nodes.
+ */
 const processLiteralIncludes = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
@@ -160,6 +167,12 @@ const processLiteralIncludes = async (
   };
 };
 
+/* Get language details for every `iocodeblock` node on a given page.
+ * We don't need to write the nodes to file for categorization as both input and output use `code` nodes, so
+ * writing the `code` nodes to files covers any `iocodeblock` nodes.
+ * For the purposes of code example audits, we consider the "language" of any `iocodeblock` to be the `input` language.
+ * The output language isn't really relevant.
+ */
 const processIoCodeBlocks = async (
   pageData: SnootyPageData
 ): Promise<PageSubtypeCodeExampleResults> => {
@@ -437,7 +450,8 @@ const commandModule: CommandModule<unknown, FindCodeExamplesArgs> = {
       process.exit(1);
     }
   },
-  describe: "Find code examples in docs pages",
+  describe:
+    "Get details about code example languages in docs pages, and write the examples to files for further processing",
 };
 
 export default commandModule;
