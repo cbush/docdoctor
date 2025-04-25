@@ -128,3 +128,6 @@ build/
 
 # JetBrains
 .idea/
+
+# Test files
+./test/removeCodeBlocks/source/untested-examples/
