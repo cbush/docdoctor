@@ -43,16 +43,12 @@ export const removeCodeBlocks = async (
       }
       const langDetails = getLangDetails(language);
       const codeNode: CodeNode = node as CodeNode;
-      console.log(codeNode);
       const optionLines: string[] = [];
       if (codeNode.optionLines !== undefined) {
         for (const option of codeNode.optionLines) {
           const trimmedOption = option.trim();
           optionLines.push(trimmedOption);
         }
-      }
-      if (codeNode.args !== undefined) {
-        console.log(`Args: ${codeNode.args}`);
       }
 
       /* Get the text of the code block
@@ -310,19 +306,56 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   return path.join(untestedDir, relPathIncludingSubdirs);
 };
 
+/**
+ * Recursively walks through directories and applies an async callback to each file.
+ *
+ * @param dirPath - The directory path to start from.
+ * @param callback - An async function to execute on each file, with the file path as an argument.
+ */
+async function walkDirectory(
+  dirPath: string,
+  callback: (filePath: string) => Promise<void>
+): Promise<void> {
+  const entries = await fs.readdir(dirPath);
+
+  for (const entry of entries) {
+    const entryPath = path.join(dirPath, entry);
+    const stats = await fs.stat(entryPath);
+
+    if (stats.isDirectory()) {
+      // We don't want to process any files in the 'untested-examples' directory
+      if (entryPath.includes("untested-examples")) {
+        continue;
+      }
+      await walkDirectory(entryPath, callback); // Recurse into subdirectory
+    } else if (stats.isFile()) {
+      await callback(entryPath);
+    }
+  }
+}
+
 const commandModule: CommandModule<unknown, RemoveCodeBlocksArgs> = {
-  command: "removeCodeBlocks <path...>",
+  command: "removeCodeBlocks <start dir...>",
   builder(args) {
     return args.positional("path", {
       type: "string",
+      describe:
+        "Start directory path where you want to removeCodeBlocks. Recursively checks/updates all files in all subdirectories.",
       demandOption: true,
     });
   },
   handler: async (args) => {
     try {
-      console.log(`Remove code blocks command called with path ${args.path}`);
+      console.log(
+        `Remove code blocks command called with start directory: ${args.path}`
+      );
       const { path } = args;
-      await removeCodeBlocksInFile(path.toString());
+      //await removeCodeBlocksInFile(path.toString());
+      walkDirectory(path.toString(), removeCodeBlocksInFile)
+        .then(() => console.log("Directory processing complete"))
+        .catch((err) =>
+          console.error(`Error walking directory: ${err.message}`)
+        );
     } catch (error) {
       console.error(error);
       process.exit(1);
