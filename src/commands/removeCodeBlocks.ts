@@ -73,8 +73,9 @@ export const removeCodeBlocks = async (
                 thisCodeBlockText += child.value;
               }
               if (
-                child.blanklines !== undefined &&
-                childCounter < numChildren
+                // child.blanklines !== undefined &&
+                // childCounter < numChildren
+                child.blanklines !== undefined
               ) {
                 thisCodeBlockText += child.blanklines;
               }
@@ -91,6 +92,9 @@ export const removeCodeBlocks = async (
                 unknownLineNode.value.slice(codeBlockIndentWidth);
             }
             thisCodeBlockText += valueMinusOffset;
+            if (unknownLineNode.blanklines !== undefined) {
+              thisCodeBlockText += unknownLineNode.blanklines;
+            }
             if (childCounter < numChildren) {
               thisCodeBlockText += "\n";
               childCounter++;
@@ -146,7 +150,7 @@ export const removeCodeBlocks = async (
  * @param codeBlock - Use the filename, language, and optionLines metadata from the code block to construct the literalinclude
  * @param indentWidth - If there is an indent, as when the literalinclude is nested, use the indent width to pad the literalinclude appropriately
  */
-const makeLiteralInclude = (
+export const makeLiteralInclude = (
   codeBlock: CodeBlockWithMetadata,
   indentWidth: number
 ): string => {
@@ -200,7 +204,7 @@ const getLangDetails = (directiveLang: string): LanguageMapper => {
   const languageMapping = LanguageValueMappings.find(
     (mapper) => mapper.directiveValue === directiveLang
   );
-  // If no language is provided, set it as "undefined" and use the associated file extension (text, .txt)
+  // If no language is provided, or an invalid language is provided, set it as "undefined" and use the associated file extension (text, .txt)
   if (languageMapping === undefined) {
     return {
       directiveValue: "none",

@@ -29,7 +29,7 @@ export enum CanonicalLanguageValues {
   SWIFT = "swift",
   TEXT = "text",
   TYPESCRIPT = "typescript",
-  UNDEFINED = "undefined",
+  UNDEFINED = "text",
   XML = "xml",
   YAML = "yaml",
 }
