@@ -1,3 +1,4 @@
+test
 # Docdoctor
 
 A tool for hacking rST
