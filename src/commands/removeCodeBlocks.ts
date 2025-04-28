@@ -46,10 +46,9 @@ export const removeCodeBlocks = async (
       console.log(codeNode);
       const optionLines: string[] = [];
       if (codeNode.optionLines !== undefined) {
-        console.log(`Option lines: ${codeNode.optionLines}`);
         for (const option of codeNode.optionLines) {
-          console.log(`In option line loop and option is ${option}`);
-          optionLines.push(option);
+          const trimmedOption = option.trim();
+          optionLines.push(trimmedOption);
         }
       }
       if (codeNode.args !== undefined) {
@@ -116,6 +115,25 @@ export const removeCodeBlocks = async (
         optionLines: optionLines,
       };
       codeBlocks.push(codeBlockWithMetadata);
+
+      // Construct literalinclude
+      const literalInclude = makeLiteralInclude(
+        codeBlockWithMetadata,
+        codeBlockIndentWidth
+      );
+
+      // Replace original code block directive with literalinclude
+      let start = node.position.start.offset;
+      const end = node.position.end.offset;
+
+      /* If there is an indent width, as when the code block is nested in a 'step' directive
+         or a 'tab' directive, calculate an offset for the start location to account for the indent
+      */
+      if (codeBlockIndentWidth > 0) {
+        // Subtract three from the indent width for the `.. ` at the beginning of the code-block directive
+        start = start + codeBlockIndentWidth - 3;
+      }
+      document.overwrite(start, end, literalInclude);
     });
   } catch (error) {
     console.error(error);
@@ -127,6 +145,42 @@ export const removeCodeBlocks = async (
   return document;
 };
 
+/**
+ * Create a literalinclude to replace the code-block directive
+ * @param codeBlock - Use the filename, language, and optionLines metadata from the code block to construct the literalinclude
+ * @param indentWidth - If there is an indent, as when the literalinclude is nested, use the indent width to pad the literalinclude appropriately
+ */
+const makeLiteralInclude = (
+  codeBlock: CodeBlockWithMetadata,
+  indentWidth: number
+): string => {
+  let literalInclude = `.. literalinclude:: ${codeBlock.filepath}\n`;
+  /* Some of the directive nodes have specific indents, such as when they're used in
+     a 'step' directive or a 'tab' directive. If there is a specific indent, add
+     that indent's worth of spaces to the front of the option lines to get them to line up.
+     Otherwise, add three spaces to get the options to line up with the base directive.
+   */
+  let padding = "";
+  if (indentWidth > 0) {
+    padding = " ".repeat(indentWidth);
+  } else {
+    padding = " ".repeat(3);
+  }
+  // The 'language' option should always follow the literalinclude
+  literalInclude += padding + `:language: ${codeBlock.language}\n`;
+
+  // If the code-block has additional options, add them after the language
+  const optionCount = codeBlock.optionLines.length;
+  if (optionCount > 0) {
+    for (const option of codeBlock.optionLines) {
+      literalInclude += padding + option + `\n`;
+    }
+  }
+  // Add another newline to the end of the literalinclude to get an empty line after the directive
+  literalInclude += `\n`;
+  return literalInclude;
+};
+
 const removeCodeBlocksInFile = async (filepath: string): Promise<void> => {
   console.log(`Reading file at path ${filepath}`);
   const rawText = await fs.readFile(filepath, "utf8");
@@ -136,8 +190,8 @@ const removeCodeBlocksInFile = async (filepath: string): Promise<void> => {
     console.log(`Visited ${filepath} -- no changes made`);
     return;
   }
-
   console.log(`Updating ${filepath}`);
+  await fs.writeFile(filepath, document.toString(), "utf8");
 };
 
 /**
@@ -202,6 +256,7 @@ const writeCodeBlocksToFile = async (
 ): Promise<void> => {
   const codeBlockDirectoryStructure =
     makeCodeBlockDirectoryFromPageFilepath(filepath);
+  // TODO: Replace this with a relpath from the passed-in start path
   const directoryAbsPath = path.join(
     "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source",
     codeBlockDirectoryStructure
@@ -227,6 +282,7 @@ const writeCodeBlocksToFile = async (
  * @param filepath - The filepath of the documentation page whose code blocks we're replacing with literalincludes
  * @returns A directory structure that matches the docs page location in the repo, whose last element is the name of the documentation page
  * */
+// TODO: Currently calling this twice - once from makeCodeBlockFilePath and once from writeCodeBlocksToFile. Store this as metadta on the page so we don't need to call it twice.
 const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   const startDir = "source";
   const startIndex = filepath.indexOf(startDir);
@@ -243,7 +299,6 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
     pathSegments.length > 1 ? pathSegments.slice(1) : [];
   // Join the remaining segments back into a path
   const pathMinusStartDir = `${path.sep}${removedFirstSegment.join(path.sep)}`;
-  console.log(`Path minus start directory: ${pathMinusStartDir}`);
   const baseName = path.basename(filepath);
   const extension = path.extname(filepath);
   const untestedDir = "untested-examples";
