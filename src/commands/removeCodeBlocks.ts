@@ -4,294 +4,13 @@ import MagicString from "magic-string";
 import { visit } from "../tree";
 import restructured from "../restructured";
 import { AnyNode } from "restructured";
+import { CodeNode } from "../types/CodeNode";
+import { CanonicalLanguageValues } from "../types/CanonicalLanguageValues";
+import { LanguageFileExtensions } from "../types/LanguageFileExtensions";
+import { LanguageValueMappings } from "../types/LanguageValueMappings";
 import * as path from "path";
-
-type CodeNode = AnyNode & {
-  position: {
-    start: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-    end: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-  };
-  //args: string; // This is the code example language
-  optionLines: string[];
-};
-
-export type LanguageMapper = {
-  directiveValue: string;
-  canonicalValue: string;
-  extension: string;
-};
-
-export enum CanonicalLanguageValues {
-  BASH = "bash",
-  BATCH = "batch",
-  C = "c",
-  CFG = "cfg",
-  CPP = "cpp",
-  CSHARP = "csharp",
-  GO = "go",
-  GROOVY = "groovy",
-  HTTP = "http",
-  INI = "ini",
-  JAVA = "java",
-  JAVASCRIPT = "javascript",
-  JSON = "json",
-  KOTLIN = "kotlin",
-  PHP = "php",
-  POWERSHELL = "powershell",
-  PYTHON = "python",
-  NONE = "text",
-  RUBY = "ruby",
-  RUST = "rust",
-  SCALA = "scala",
-  SHELL = "shell",
-  SQL = "sql",
-  SWIFT = "swift",
-  TEXT = "text",
-  TYPESCRIPT = "typescript",
-  UNDEFINED = "undefined",
-  XML = "xml",
-  YAML = "yaml",
-}
-
-export enum LanguageFileExtensions {
-  BASH = ".sh",
-  BATCH = ".bat",
-  C = ".c",
-  CFG = ".cfg",
-  CPP = ".cpp",
-  CSHARP = ".cs",
-  GO = ".go",
-  GROOVY = ".groovy",
-  INI = ".ini",
-  JAVA = ".java",
-  JAVASCRIPT = ".js",
-  JSON = ".json",
-  KOTLIN = ".kt",
-  NONE = ".txt",
-  PHP = ".php",
-  POWERSHELL = "powershell",
-  PYTHON = ".py",
-  RUBY = ".rb",
-  RUST = ".rs",
-  SCALA = ".scala",
-  SHELL = ".sh",
-  SQL = ".sql",
-  SWIFT = ".swift",
-  TEXT = ".txt",
-  TYPESCRIPT = ".ts",
-  UNDEFINED = ".txt",
-  XML = ".xml",
-  YAML = ".yaml",
-}
-
-const languageValueMappings: LanguageMapper[] = [
-  {
-    directiveValue: "",
-    canonicalValue: CanonicalLanguageValues.UNDEFINED,
-    extension: LanguageFileExtensions.UNDEFINED,
-  },
-  {
-    directiveValue: "",
-    canonicalValue: CanonicalLanguageValues.UNDEFINED,
-    extension: LanguageFileExtensions.UNDEFINED,
-  },
-  {
-    directiveValue: "bash",
-    canonicalValue: CanonicalLanguageValues.BASH,
-    extension: LanguageFileExtensions.BASH,
-  },
-  {
-    directiveValue: "bat",
-    canonicalValue: CanonicalLanguageValues.BATCH,
-    extension: LanguageFileExtensions.BATCH,
-  },
-  {
-    directiveValue: "c",
-    canonicalValue: CanonicalLanguageValues.C,
-    extension: LanguageFileExtensions.C,
-  },
-  {
-    directiveValue: "cfg",
-    canonicalValue: CanonicalLanguageValues.CFG,
-    extension: LanguageFileExtensions.CFG,
-  },
-  {
-    directiveValue: "console",
-    canonicalValue: CanonicalLanguageValues.SHELL,
-    extension: LanguageFileExtensions.SHELL,
-  },
-  {
-    directiveValue: "cpp",
-    canonicalValue: CanonicalLanguageValues.CPP,
-    extension: LanguageFileExtensions.CPP,
-  },
-  {
-    directiveValue: "cs",
-    canonicalValue: CanonicalLanguageValues.CSHARP,
-    extension: LanguageFileExtensions.CSHARP,
-  },
-  {
-    directiveValue: "csharp",
-    canonicalValue: CanonicalLanguageValues.CSHARP,
-    extension: LanguageFileExtensions.CSHARP,
-  },
-  {
-    directiveValue: "go",
-    canonicalValue: CanonicalLanguageValues.GO,
-    extension: LanguageFileExtensions.GO,
-  },
-  {
-    directiveValue: "golang",
-    canonicalValue: CanonicalLanguageValues.GO,
-    extension: LanguageFileExtensions.GO,
-  },
-  {
-    directiveValue: "groovy",
-    canonicalValue: CanonicalLanguageValues.GROOVY,
-    extension: LanguageFileExtensions.GROOVY,
-  },
-  {
-    directiveValue: "http",
-    canonicalValue: CanonicalLanguageValues.HTTP,
-    extension: LanguageFileExtensions.TEXT,
-  },
-  {
-    directiveValue: "ini",
-    canonicalValue: CanonicalLanguageValues.INI,
-    extension: LanguageFileExtensions.INI,
-  },
-  {
-    directiveValue: "java",
-    canonicalValue: CanonicalLanguageValues.JAVA,
-    extension: LanguageFileExtensions.JAVA,
-  },
-  {
-    directiveValue: "javascript",
-    canonicalValue: CanonicalLanguageValues.JAVASCRIPT,
-    extension: LanguageFileExtensions.JAVASCRIPT,
-  },
-  {
-    directiveValue: "js",
-    canonicalValue: CanonicalLanguageValues.JAVASCRIPT,
-    extension: LanguageFileExtensions.JAVASCRIPT,
-  },
-  {
-    directiveValue: "json",
-    canonicalValue: CanonicalLanguageValues.JSON,
-    extension: LanguageFileExtensions.JSON,
-  },
-  {
-    directiveValue: "JSON",
-    canonicalValue: CanonicalLanguageValues.JSON,
-    extension: LanguageFileExtensions.JSON,
-  },
-  {
-    directiveValue: "kotlin",
-    canonicalValue: CanonicalLanguageValues.KOTLIN,
-    extension: LanguageFileExtensions.KOTLIN,
-  },
-  {
-    directiveValue: "none",
-    canonicalValue: CanonicalLanguageValues.NONE,
-    extension: LanguageFileExtensions.NONE,
-  },
-  {
-    directiveValue: "powershell",
-    canonicalValue: CanonicalLanguageValues.POWERSHELL,
-    extension: LanguageFileExtensions.POWERSHELL,
-  },
-  {
-    directiveValue: "php",
-    canonicalValue: CanonicalLanguageValues.PHP,
-    extension: LanguageFileExtensions.PHP,
-  },
-  {
-    directiveValue: "ps1",
-    canonicalValue: CanonicalLanguageValues.POWERSHELL,
-    extension: LanguageFileExtensions.POWERSHELL,
-  },
-  {
-    directiveValue: "python",
-    canonicalValue: CanonicalLanguageValues.PYTHON,
-    extension: LanguageFileExtensions.PYTHON,
-  },
-  {
-    directiveValue: "ruby",
-    canonicalValue: CanonicalLanguageValues.RUBY,
-    extension: LanguageFileExtensions.RUBY,
-  },
-  {
-    directiveValue: "rust",
-    canonicalValue: CanonicalLanguageValues.RUST,
-    extension: LanguageFileExtensions.RUST,
-  },
-  {
-    directiveValue: "scala",
-    canonicalValue: CanonicalLanguageValues.SCALA,
-    extension: LanguageFileExtensions.SCALA,
-  },
-  {
-    directiveValue: "sh",
-    canonicalValue: CanonicalLanguageValues.SHELL,
-    extension: LanguageFileExtensions.SHELL,
-  },
-  {
-    directiveValue: "shell",
-    canonicalValue: CanonicalLanguageValues.SHELL,
-    extension: LanguageFileExtensions.SHELL,
-  },
-  {
-    directiveValue: "sql",
-    canonicalValue: CanonicalLanguageValues.SQL,
-    extension: LanguageFileExtensions.SQL,
-  },
-  {
-    directiveValue: "swift",
-    canonicalValue: CanonicalLanguageValues.SWIFT,
-    extension: LanguageFileExtensions.SWIFT,
-  },
-  {
-    directiveValue: "text",
-    canonicalValue: CanonicalLanguageValues.TEXT,
-    extension: LanguageFileExtensions.TEXT,
-  },
-  {
-    directiveValue: "typescript",
-    canonicalValue: CanonicalLanguageValues.TYPESCRIPT,
-    extension: LanguageFileExtensions.TYPESCRIPT,
-  },
-  {
-    directiveValue: "undefined",
-    canonicalValue: CanonicalLanguageValues.UNDEFINED,
-    extension: LanguageFileExtensions.UNDEFINED,
-  },
-  {
-    directiveValue: "xml",
-    canonicalValue: CanonicalLanguageValues.XML,
-    extension: LanguageFileExtensions.XML,
-  },
-  {
-    directiveValue: "yaml",
-    canonicalValue: CanonicalLanguageValues.YAML,
-    extension: LanguageFileExtensions.YAML,
-  },
-];
-
-type CodeBlockWithMetadata = {
-  language: string;
-  fileExtension: string;
-  instanceNumber: number;
-  content: string;
-  optionLines: string[];
-};
+import { LanguageMapper } from "../types/LanguageMapper";
+import { CodeBlockWithMetadata } from "../types/CodeBlockWithMetadata";
 
 export const removeCodeBlocks = async (
   filepath: string,
@@ -384,11 +103,15 @@ export const removeCodeBlocks = async (
           }
         }
       }
+      const codeBlockFilePath = makeCodeBlockFilePath(
+        filepath,
+        codeBlockInstance,
+        langDetails.extension
+      );
       // Initialize a code block type with text and metadata about the code block
       const codeBlockWithMetadata: CodeBlockWithMetadata = {
         language: langDetails.canonicalValue,
-        fileExtension: langDetails.extension,
-        instanceNumber: codeBlockInstance,
+        filepath: codeBlockFilePath,
         content: thisCodeBlockText,
         optionLines: optionLines,
       };
@@ -417,10 +140,17 @@ const removeCodeBlocksInFile = async (filepath: string): Promise<void> => {
   console.log(`Updating ${filepath}`);
 };
 
+/**
+ * Attempts to normalize the code example language provided in the directive and determine an associated filepath
+ *
+ * @param directiveLang - the language that the writer supplied in the directive - i.e. `code-block:: shell`
+ * @returns { LanguageMapper } struct that contains the directive language value, the normalized lang value, and file extension
+ */
 const getLangDetails = (directiveLang: string): LanguageMapper => {
-  const languageMapping = languageValueMappings.find(
+  const languageMapping = LanguageValueMappings.find(
     (mapper) => mapper.directiveValue === directiveLang
   );
+  // If no language is provided, set it as "undefined" and use the associated file extension (text, .txt)
   if (languageMapping === undefined) {
     return {
       directiveValue: "none",
@@ -436,6 +166,36 @@ export type RemoveCodeBlocksArgs = {
   path: string;
 };
 
+/**
+ * Make a file path for the code block that we'll write to file, and we'll use the file path in the literalinclude that
+ * replaces the code block directive.
+ *
+ * @param filepath - The existing docs file filepath, which we use as a directory to store the code blocks we write to file
+ * @param instanceNumber - Because we don't have filenames for the code blocks, use the instance number of the code block on the page as the filename
+ * @param fileExtension - The file extension associated with the canonical programming language, so we can write the code block to an appropriate file type
+ */
+const makeCodeBlockFilePath = (
+  filepath: string,
+  instanceNumber: number,
+  fileExtension: string
+): string => {
+  const codeBlockDirectoryStructure =
+    makeCodeBlockDirectoryFromPageFilepath(filepath);
+  // TODO: Replace this with a relpath from the passed-in start path
+  const directoryAbsPath = path.join(
+    "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source",
+    codeBlockDirectoryStructure
+  );
+  const filename = instanceNumber.toString() + fileExtension;
+  return directoryAbsPath + "/" + filename;
+};
+
+/**
+ * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `untested-files` directory
+ *
+ * @param filepath - The page file path, for creating a relevant directory so we can write files to it
+ * @param codeBlocks - Array of code blocks from the page, with their associated metadata, for writing to file
+ */
 const writeCodeBlocksToFile = async (
   filepath: string,
   codeBlocks: CodeBlockWithMetadata[]
@@ -446,25 +206,27 @@ const writeCodeBlocksToFile = async (
     "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source",
     codeBlockDirectoryStructure
   );
-  console.log(`Filepath: ${codeBlockDirectoryStructure}`);
-  const numberOfCodeBlocks = codeBlocks.length;
-  console.log(`Got ${numberOfCodeBlocks} code blocks for page`);
+  console.log(`Got ${codeBlocks.length} code blocks for page`);
   for (const codeBlock of codeBlocks) {
-    const filename =
-      codeBlock.instanceNumber.toString() + codeBlock.fileExtension;
-    const pathWithFilename = directoryAbsPath + "/" + filename;
-
     // Ensure the directory structure exists
     try {
       await fs.mkdir(directoryAbsPath, { recursive: true });
-      await fs.writeFile(pathWithFilename, codeBlock.content, "utf8");
-      console.log(`Successfully wrote code block file at: ${pathWithFilename}`);
+      await fs.writeFile(codeBlock.filepath, codeBlock.content, "utf8");
+      console.log(
+        `Successfully wrote code block file at: ${codeBlock.filepath}`
+      );
     } catch (err) {
       console.error(`Error writing code block file: ${err}`);
     }
   }
 };
 
+/**
+ * Turn the filepath from the documentation page into a directory at the given directory structure. This dir will hold the code blocks from the page.
+ *
+ * @param filepath - The filepath of the documentation page whose code blocks we're replacing with literalincludes
+ * @returns A directory structure that matches the docs page location in the repo, whose last element is the name of the documentation page
+ * */
 const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   const startDir = "source";
   const startIndex = filepath.indexOf(startDir);
@@ -474,7 +236,6 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   } else {
     console.error(`The directory "${startDir}" was not found in the path.`);
   }
-  console.log(`Relative path: ${relativePath}`);
   // Split the path into segments
   const pathSegments = relativePath.split(path.sep);
   // Remove the first segment; note that the first segment is empty due to the initial '/'
@@ -487,15 +248,11 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   const extension = path.extname(filepath);
   const untestedDir = "untested-examples";
   const codeBlockPageDir = baseName.replace(extension, "");
-  console.log(`Code block page dir: ${codeBlockPageDir}`);
   const relPathIncludingSubdirs = pathMinusStartDir.replace(
     baseName,
     codeBlockPageDir
   );
-  console.log(`Rel path including subdirs: ${relPathIncludingSubdirs}`);
-  const codeBlockDir = path.join(untestedDir, relPathIncludingSubdirs);
-  console.log(`Code block dir: ${codeBlockDir}`);
-  return codeBlockDir;
+  return path.join(untestedDir, relPathIncludingSubdirs);
 };
 
 const commandModule: CommandModule<unknown, RemoveCodeBlocksArgs> = {

@@ -129,5 +129,5 @@ build/
 # JetBrains
 .idea/
 
-# Test files
-./test/removeCodeBlocks/source/untested-examples/
+# Output test files for removeCodeBlocks command
+untested-examples/
