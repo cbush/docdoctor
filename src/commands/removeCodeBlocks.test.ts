@@ -161,43 +161,41 @@ describe("removeCodeBlocks", () => {
   it("should output the code from the code block correctly to the file", async () => {
     const source = `Copy and paste the following into the search/input box.
 
-       .. code-block::
+.. code-block::
 
-          https://github.com/realm/realm-swift.git
+   https://github.com/realm/realm-swift.git
 
 `;
     await removeCodeBlocks("source/arbitrary-dir-name/file.txt", source);
     const fileContents = await fs.readFile(
-      "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh",
+      "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.txt",
       "utf8"
     );
-    expect(fileContents).toBe(
-      `https://github.com/realm/realm-swift.git\n`
-    );
+    expect(fileContents).toBe(`https://github.com/realm/realm-swift.git\n`);
   });
 
   it("should output multiline code from the code block correctly to the file", async () => {
     const source = `Copy and paste the following into the search/input box.
 
-     .. code-block:: text
+.. code-block:: text
 
-        # Uncomment the next line to define a global platform for your project
-        # platform :ios, '9.0'
+   # Uncomment the next line to define a global platform for your project
+   # platform :ios, '9.0'
 
-        target 'MyRealmProject' do
-        # Comment the next line if you don't want to use dynamic frameworks
-        use_frameworks!
+   target 'MyRealmProject' do
+   # Comment the next line if you don't want to use dynamic frameworks
+   use_frameworks!
 
-        # Pods for MyRealmProject
-        pod 'Realm', '~>10'
+   # Pods for MyRealmProject
+   pod 'Realm', '~>10'
 
-        target 'MyRealmProjectTests' do
-           inherit! :search_paths
-           # Pods for testing
-           pod 'Realm', '~>10'
-        end
+   target 'MyRealmProjectTests' do
+      inherit! :search_paths
+      # Pods for testing
+      pod 'Realm', '~>10'
+   end
 
-        end
+   end
 
 `;
     await removeCodeBlocks("source/arbitrary-dir-name/file.txt", source);
