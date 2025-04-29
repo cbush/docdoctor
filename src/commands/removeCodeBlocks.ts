@@ -42,66 +42,39 @@ export const removeCodeBlocks = async (
         language = node.args as string;
       }
       const langDetails = getLangDetails(language);
-      const codeNode: CodeNode = node as CodeNode;
       const optionLines: string[] = [];
-      if (codeNode.optionLines !== undefined) {
-        for (const option of codeNode.optionLines) {
+      if (node["optionLines"] !== undefined) {
+        const optionsFromDirective = node["optionLines"] as string[];
+        for (const option of optionsFromDirective) {
           const trimmedOption = option.trim();
           optionLines.push(trimmedOption);
         }
+
+        console.log(optionLines);
       }
 
-      /* Get the text of the code block
-         For Reasons, the text may be contained in an array of children of multiple types
-         Each type has a different structure and needs different handling
-         Get all the text from all the child nodes of the code block to build the code block contents as a string
-       */
-      let thisCodeBlockText = "";
-      const numChildren = codeNode.children.length;
-      let childCounter = 1;
       let codeBlockIndentWidth = 0;
-      if (codeNode.indent?.width !== undefined) {
-        codeBlockIndentWidth += codeNode.indent.width;
-      }
-      for (const childIndex in codeNode.children) {
-        const nodeType = codeNode.children[childIndex].type;
-        if (nodeType === "paragraph" || nodeType === "unknown_line") {
-          if (nodeType === "paragraph") {
-            const paragraphNode: AnyNode = codeNode.children[childIndex];
-            for (const child of paragraphNode.children) {
-              if (child.type === "text") {
-                thisCodeBlockText += child.value;
-              }
-              if (
-                // child.blanklines !== undefined &&
-                // childCounter < numChildren
-                child.blanklines !== undefined
-              ) {
-                thisCodeBlockText += child.blanklines;
-              }
-            }
-            if (childCounter < numChildren) {
-              thisCodeBlockText += "\n";
-              childCounter++;
-            }
-          } else {
-            const unknownLineNode: AnyNode = codeNode.children[childIndex];
-            let valueMinusOffset = "";
-            if (unknownLineNode.value.length > codeBlockIndentWidth) {
-              valueMinusOffset =
-                unknownLineNode.value.slice(codeBlockIndentWidth);
-            }
-            thisCodeBlockText += valueMinusOffset;
-            if (unknownLineNode.blanklines !== undefined) {
-              thisCodeBlockText += unknownLineNode.blanklines;
-            }
-            if (childCounter < numChildren) {
-              thisCodeBlockText += "\n";
-              childCounter++;
-            }
-          }
+      if (node["indent"] !== undefined) {
+        const indentDetails = node["indent"];
+        if (indentDetails?.width !== undefined) {
+          codeBlockIndentWidth = indentDetails?.width;
         }
       }
+
+      const numChildren = countTotalChildren(node);
+      const childCounter = 0;
+
+      // Initialize an aggregator object to hold the results
+      // Collect text values from nodes
+      let thisCodeBlockText = "";
+      thisCodeBlockText = collectTextValues(
+        node,
+        thisCodeBlockText,
+        childCounter,
+        numChildren
+      );
+      console.log(thisCodeBlockText);
+
       const codeBlockFilePath = makeCodeBlockFilePath(
         filepath,
         codeBlockInstance,
@@ -143,6 +116,80 @@ export const removeCodeBlocks = async (
     await writeCodeBlocksToFile(filepath, codeBlocks);
   }
   return document;
+};
+
+const collectTextValues = (
+  node: AnyNode,
+  textAggregator: string,
+  childNumber: number,
+  numChildren: number
+): string => {
+  childNumber++;
+  // If the node is of type 'text', append its value to the result string
+  if (node["value"] !== undefined && typeof node["value"] === "string") {
+    const text = node["value"] as string;
+    let textIndent = 0;
+    let trimmedText = text;
+    if (node.position.start !== undefined) {
+      textIndent = node.position.start.column;
+      trimmedText = trimLeadingNSpaces(text, textIndent);
+    }
+
+    textAggregator += trimmedText;
+    if (node["type"] === "unknown_line") {
+      textAggregator += "\n";
+    }
+    // if (childNumber < numChildren) {
+    //   textAggregator += "\n";
+    // } else {
+    //   textAggregator += "\n\n";
+    // }
+    if (node.blanklines !== undefined) {
+      const numBlanklines = node.blanklines.length;
+      textAggregator += "\n".repeat(numBlanklines);
+    }
+  }
+
+  // Check if children exists and is an array before iterating
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      textAggregator = collectTextValues(
+        child,
+        textAggregator,
+        childNumber,
+        numChildren
+      );
+    }
+  }
+  return textAggregator;
+};
+
+const trimLeadingNSpaces = (input: string, N: number): string => {
+  let index = 0;
+
+  // Iterate through the string character by character, up to N characters
+  while (index < input.length && index < N && input[index] === " ") {
+    index++;
+  }
+
+  // Return the substring starting from the first character after the spaces
+  return input.slice(index);
+};
+
+const countTotalChildren = (node: AnyNode): number => {
+  let count = 0;
+
+  if (Array.isArray(node.children)) {
+    // Add the number of direct children
+    count += node.children.length;
+
+    // Recursively count the children of each child node
+    for (const child of node.children) {
+      count += countTotalChildren(child);
+    }
+  }
+
+  return count;
 };
 
 /**
@@ -339,7 +386,7 @@ async function walkDirectory(
 }
 
 const commandModule: CommandModule<unknown, RemoveCodeBlocksArgs> = {
-  command: "removeCodeBlocks <start dir...>",
+  command: "removeCodeBlocks <path...>",
   builder(args) {
     return args.positional("path", {
       type: "string",
