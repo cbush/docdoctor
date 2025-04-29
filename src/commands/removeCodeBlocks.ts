@@ -3,8 +3,6 @@ import { promises as fs } from "fs";
 import MagicString from "magic-string";
 import { visit } from "../tree";
 import restructured from "../restructured";
-import { AnyNode } from "restructured";
-import { CodeNode } from "../types/CodeNode";
 import { CanonicalLanguageValues } from "../types/CanonicalLanguageValues";
 import { LanguageFileExtensions } from "../types/LanguageFileExtensions";
 import { LanguageValueMappings } from "../types/LanguageValueMappings";
@@ -36,12 +34,19 @@ export const removeCodeBlocks = async (
       if (node["directive"] !== "code-block") {
         return;
       }
+
+      // We use the code block instance number on the page as a name for the code block file
       codeBlockInstance++;
+
+      // If a writer has provided a language for the code block, its value is the `args` field
       let language = "text";
       if (node.args !== undefined) {
         language = node.args as string;
       }
+      // Normalize the language value, and get the corresponding file extension
       const langDetails = getLangDetails(language);
+
+      // Capture any option lines that are present on the code block, such as ':emphasize-lines: 2'
       const optionLines: string[] = [];
       if (node["optionLines"] !== undefined) {
         const optionsFromDirective = node["optionLines"] as string[];
@@ -49,31 +54,29 @@ export const removeCodeBlocks = async (
           const trimmedOption = option.trim();
           optionLines.push(trimmedOption);
         }
-
-        console.log(optionLines);
       }
 
-      let codeBlockIndentWidth = 0;
-      if (node["indent"] !== undefined) {
-        const indentDetails = node["indent"];
-        if (indentDetails?.width !== undefined) {
-          codeBlockIndentWidth = indentDetails?.width;
-        }
-      }
-
-      const numChildren = countTotalChildren(node);
-      const childCounter = 0;
-
-      // Initialize an aggregator object to hold the results
-      // Collect text values from nodes
-      let thisCodeBlockText = "";
-      thisCodeBlockText = collectTextValues(
-        node,
-        thisCodeBlockText,
-        childCounter,
-        numChildren
+      /* The 'restructured' library that this project uses handles child nodes
+       * suboptimally. It interprets the code block value as many different child
+       * nodes, often of different directive types with different structures.
+       * Instead of trying to derive the code block text as through reading the
+       * values of many different child nodes, we capture the entirety of the
+       * `code-block` directive as text, and manipulate it to get the code block
+       * content, remove any nested indentation, and write it to file.
+       */
+      const directiveAndValueText = document.slice(
+        node.position.start.offset,
+        node.position.end.offset
       );
-      console.log(thisCodeBlockText);
+
+      /* Use this to trim any indentation from the code block text, as when the
+       * code block is nested in a tab or other directive type.
+       */
+      const trimCodeBlockWidth = node.position.start.column;
+      const formattedCodeBlockText = getFormattedCodeBlockTextFromDirective(
+        directiveAndValueText,
+        trimCodeBlockWidth
+      );
 
       const codeBlockFilePath = makeCodeBlockFilePath(
         filepath,
@@ -84,27 +87,35 @@ export const removeCodeBlocks = async (
       const codeBlockWithMetadata: CodeBlockWithMetadata = {
         language: langDetails.canonicalValue,
         filepath: codeBlockFilePath,
-        content: thisCodeBlockText,
+        content: formattedCodeBlockText,
         optionLines: optionLines,
       };
       codeBlocks.push(codeBlockWithMetadata);
 
+      /* If there is an indent width, as when the code block is nested in a 'step' directive
+         or a 'tab' directive, calculate an offset for the start location to account for the indent
+      */
+      let literalIncludeStartIndentWidth = 0;
+      if (node["indent"] !== undefined) {
+        const indentDetails = node["indent"];
+        if (indentDetails?.width !== undefined) {
+          literalIncludeStartIndentWidth = indentDetails?.width;
+        }
+      }
+
       // Construct literalinclude
       const literalInclude = makeLiteralInclude(
         codeBlockWithMetadata,
-        codeBlockIndentWidth
+        literalIncludeStartIndentWidth
       );
 
       // Replace original code block directive with literalinclude
       let start = node.position.start.offset;
       const end = node.position.end.offset;
 
-      /* If there is an indent width, as when the code block is nested in a 'step' directive
-         or a 'tab' directive, calculate an offset for the start location to account for the indent
-      */
-      if (codeBlockIndentWidth > 0) {
+      if (literalIncludeStartIndentWidth > 0) {
         // Subtract three from the indent width for the `.. ` at the beginning of the code-block directive
-        start = start + codeBlockIndentWidth - 3;
+        start = start + literalIncludeStartIndentWidth - 3;
       }
       document.overwrite(start, end, literalInclude);
     });
@@ -118,52 +129,57 @@ export const removeCodeBlocks = async (
   return document;
 };
 
-const collectTextValues = (
-  node: AnyNode,
-  textAggregator: string,
-  childNumber: number,
-  numChildren: number
+/**
+ * Remove the code block directive and option lines, and get only the code text itself
+ * @param inputString - The entirety of the code block directive, including the `.. code-block::` directive start and code content
+ * @param indentWidth - The start column of the code block text, to properly adjust the offset to un-indent nested content
+ */
+const getFormattedCodeBlockTextFromDirective = (
+  inputString: string,
+  indentWidth: number
 ): string => {
-  childNumber++;
-  // If the node is of type 'text', append its value to the result string
-  if (node["value"] !== undefined && typeof node["value"] === "string") {
-    const text = node["value"] as string;
-    let textIndent = 0;
-    let trimmedText = text;
-    if (node.position.start !== undefined) {
-      textIndent = node.position.start.column;
-      trimmedText = trimLeadingNSpaces(text, textIndent);
-    }
+  // Split the input string into lines
+  const lines = inputString.split("\n");
 
-    textAggregator += trimmedText;
-    if (node["type"] === "unknown_line") {
-      textAggregator += "\n";
-    }
-    // if (childNumber < numChildren) {
-    //   textAggregator += "\n";
-    // } else {
-    //   textAggregator += "\n\n";
-    // }
-    if (node.blanklines !== undefined) {
-      const numBlanklines = node.blanklines.length;
-      textAggregator += "\n".repeat(numBlanklines);
-    }
+  let index = 0;
+
+  // Skip the initial `.. code-block::` line
+  if (lines[index].trimStart().startsWith(".. code-block::")) {
+    index++;
   }
 
-  // Check if children exists and is an array before iterating
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      textAggregator = collectTextValues(
-        child,
-        textAggregator,
-        childNumber,
-        numChildren
-      );
-    }
+  // Skip any `:option:` lines
+  while (index < lines.length && lines[index].trimStart().startsWith(":")) {
+    index++;
   }
-  return textAggregator;
+
+  // Skip the blank line
+  while (index < lines.length && lines[index].trim() === "") {
+    index++;
+  }
+
+  // Collect the remaining lines starting from the first non-meta line
+  const remainingLines = lines.slice(index);
+  const trimmedLines: string[] = [];
+  for (const line of remainingLines) {
+    trimmedLines.push(trimLeadingNSpaces(line, indentWidth + 2));
+  }
+
+  // Return the remaining lines joined back into a string
+  let codeBlockLines = trimmedLines.join("\n");
+
+  // Trim any extra newlines from the end
+  codeBlockLines = codeBlockLines.replace(/\n+$/, "");
+  codeBlockLines += "\n";
+  return codeBlockLines;
 };
 
+/**
+ * Remove the first N spaces from a line. Used to un-indent nested content.
+ *
+ * @param input - The string to trim - in this case, code block text
+ * @param N - The number of spaces to trim from the line, derived from the node.position.start.column
+ */
 const trimLeadingNSpaces = (input: string, N: number): string => {
   let index = 0;
 
@@ -174,22 +190,6 @@ const trimLeadingNSpaces = (input: string, N: number): string => {
 
   // Return the substring starting from the first character after the spaces
   return input.slice(index);
-};
-
-const countTotalChildren = (node: AnyNode): number => {
-  let count = 0;
-
-  if (Array.isArray(node.children)) {
-    // Add the number of direct children
-    count += node.children.length;
-
-    // Recursively count the children of each child node
-    for (const child of node.children) {
-      count += countTotalChildren(child);
-    }
-  }
-
-  return count;
 };
 
 /**
