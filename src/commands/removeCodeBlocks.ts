@@ -84,8 +84,14 @@ export const removeCodeBlocks = async (
         trimCodeBlockWidth
       );
 
-      const codeBlockFilePath = makeCodeBlockFilePath(
+      const codeBlockWriteFilePath = makeCodeBlockWriteFilePath(
         absFilepathToSource,
+        codeBlockDirectory,
+        codeBlockInstance,
+        langDetails.extension
+      );
+
+      const literalincludeFilePath = makeLiteralincludeFilePath(
         codeBlockDirectory,
         codeBlockInstance,
         langDetails.extension
@@ -93,7 +99,8 @@ export const removeCodeBlocks = async (
       // Initialize a code block type with text and metadata about the code block
       const codeBlockWithMetadata: CodeBlockWithMetadata = {
         language: langDetails.canonicalValue,
-        filepath: codeBlockFilePath,
+        writeFilepath: codeBlockWriteFilePath,
+        literalincludeFilepath: literalincludeFilePath,
         codeBlockDirectory: codeBlockDirectory,
         content: formattedCodeBlockText,
         optionLines: optionLines,
@@ -215,7 +222,7 @@ export const makeLiteralInclude = (
   codeBlock: CodeBlockWithMetadata,
   indentWidth: number
 ): string => {
-  let literalInclude = `.. literalinclude:: ${codeBlock.filepath}\n`;
+  let literalInclude = `.. literalinclude:: ${codeBlock.literalincludeFilepath}\n`;
   /* Some of the directive nodes have specific indents, such as when they're used in
      a 'step' directive or a 'tab' directive. If there is a specific indent, add
      that indent's worth of spaces to the front of the option lines to get them to line up.
@@ -295,7 +302,7 @@ export type RemoveCodeBlocksArgs = {
  * @param instanceNumber - Because we don't have filenames for the code blocks, use the instance number of the code block on the page as the filename
  * @param fileExtension - The file extension associated with the canonical programming language, so we can write the code block to an appropriate file type
  */
-const makeCodeBlockFilePath = (
+const makeCodeBlockWriteFilePath = (
   absFilepathToSource: string,
   codeBlockDirectory: string,
   instanceNumber: number,
@@ -304,6 +311,24 @@ const makeCodeBlockFilePath = (
   const directoryAbsPath = path.join(absFilepathToSource, codeBlockDirectory);
   const filename = instanceNumber.toString() + fileExtension;
   return directoryAbsPath + "/" + filename;
+};
+
+/**
+ * Make a file path to use in the literalinclude that replaces the code block directive. This filepath is relative to the
+ * `source` directory, unlike the write filepath, which uses the abs file path to write the file to disk.
+ *
+ * @param codeBlockDirectory - The directory to use to write code blocks for the page, derived from the docs file filepath
+ * @param instanceNumber - Because we don't have filenames for the code blocks, use the instance number of the code block on the page as the filename
+ * @param fileExtension - The file extension associated with the canonical programming language, so we can write the code block to an appropriate file type
+ */
+const makeLiteralincludeFilePath = (
+  codeBlockDirectory: string,
+  instanceNumber: number,
+  fileExtension: string
+): string => {
+  const filename = instanceNumber.toString() + fileExtension;
+  // codeBlockDirectory lacks the leading slash, so we construct this path with a string literal instead of using path.join
+  return `/${codeBlockDirectory}/${filename}`;
 };
 
 /**
@@ -323,9 +348,9 @@ const writeCodeBlocksToFile = async (
     // Ensure the directory structure exists
     try {
       await fs.mkdir(directoryAbsPath, { recursive: true });
-      await fs.writeFile(codeBlock.filepath, codeBlock.content, "utf8");
+      await fs.writeFile(codeBlock.writeFilepath, codeBlock.content, "utf8");
       console.log(
-        `Successfully wrote code block file at: ${codeBlock.filepath}`
+        `Successfully wrote code block file at: ${codeBlock.writeFilepath}`
       );
     } catch (err) {
       console.error(`Error writing code block file: ${err}`);
@@ -355,14 +380,17 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
     pathSegments.length > 1 ? pathSegments.slice(1) : [];
   // Join the remaining segments back into a path
   const pathMinusStartDir = `${path.sep}${removedFirstSegment.join(path.sep)}`;
+  console.log(`Path minus start dir is: ${pathMinusStartDir}`);
   const baseName = path.basename(filepath);
   const extension = path.extname(filepath);
   const untestedDir = "untested-examples";
   const codeBlockPageDir = baseName.replace(extension, "");
+  console.log(`Code block page dir is: ${codeBlockPageDir}`);
   const relPathIncludingSubdirs = pathMinusStartDir.replace(
     baseName,
     codeBlockPageDir
   );
+  console.log(`Rel path including subdirs is: ${codeBlockPageDir}`);
   return path.join(untestedDir, relPathIncludingSubdirs);
 };
 

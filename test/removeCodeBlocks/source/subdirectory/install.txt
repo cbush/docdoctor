@@ -61,11 +61,9 @@ Realm Swift SDK to your project.
 
             Copy and paste the following into the search/input box.
 
-            .. code-block:: sh
+            .. literalinclude:: /untested-examples/subdirectory/install/1.sh
+               :language: shell
                :copyable: false
-
-               https://github.com/realm/realm-swift.git
-
 
          .. step:: Specify Options
 
@@ -120,20 +118,10 @@ Realm Swift SDK to your project.
 
                   When done, your Podfile should look something like this:
 
-                  .. code-block:: text
+                  .. literalinclude:: /untested-examples/subdirectory/install/2.txt
+                     :language: text
                      :emphasize-lines: 8
                      :copyable: false
-
-                     platform :ios, '12.0'
-
-                     target 'MyRealmProject' do
-                       # Comment the next line if you don't want to use dynamic frameworks
-                       use_frameworks!
-
-                       # Pods for MyRealmProject
-                       pod 'RealmSwift', '~>10'
-
-                     end
 
               .. tab::
                   :tabid: objective-c
@@ -146,28 +134,10 @@ Realm Swift SDK to your project.
 
                   When done, your Podfile should look something like this:
 
-                  .. code-block:: text
+                  .. literalinclude:: /untested-examples/subdirectory/install/3.txt
+                     :language: text
                      :emphasize-lines: 6, 9, 14
                      :lineos: true
-
-                     # Uncomment the next line to define a global platform for your project
-                     # platform :ios, '9.0'
-
-                     target 'MyRealmProject' do
-                     # Comment the next line if you don't want to use dynamic frameworks
-                     use_frameworks!
-
-                     # Pods for MyRealmProject
-                     pod 'Realm', '~>10'
-
-                     target 'MyRealmProjectTests' do
-                        inherit! :search_paths
-                        # Pods for testing
-                        pod 'Realm', '~>10'
-                     end
-
-                     end
-
 
          .. step:: Install the Dependencies
 
@@ -200,10 +170,8 @@ Realm Swift SDK to your project.
             You can create a Cartfile or append to an existing one by
             running the following command in your project directory:
 
-            .. code-block:: bash
-
-               echo 'github "realm/realm-swift"' >> Cartfile
-
+            .. literalinclude:: /untested-examples/subdirectory/install/4.sh
+               :language: bash
 
          .. step:: Install the Dependencies
 
@@ -250,9 +218,8 @@ Realm Swift SDK to your project.
             the source input box for the new script, paste the
             following snippet:
 
-            .. code-block:: bash
-
-               /usr/local/bin/carthage copy-frameworks
+            .. literalinclude:: /untested-examples/subdirectory/install/5.sh
+               :language: bash
 
             In the :guilabel:`Input Files` box below the source
             input box, add the paths to the frameworks for your
@@ -264,17 +231,14 @@ Realm Swift SDK to your project.
               .. tab::
                   :tabid: swift
 
-                  .. code-block:: text
-
-                     $(SRCROOT)/Carthage/Build/iOS/Realm.framework
-                     $(SRCROOT)/Carthage/Build/iOS/RealmSwift.framework
+                  .. literalinclude:: /untested-examples/subdirectory/install/6.txt
+                     :language: text
 
               .. tab::
                   :tabid: objective-c
 
-                  .. code-block:: text
-
-                     $(SRCROOT)/Carthage/Build/iOS/Realm.framework
+                  .. literalinclude:: /untested-examples/subdirectory/install/7.txt
+                     :language: text
 
             .. figure:: /images/carthage-build-phase-script.png
                :alt: Enabling the copy frameworks script in Xcode

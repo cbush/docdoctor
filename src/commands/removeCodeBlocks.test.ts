@@ -26,7 +26,7 @@ describe("removeCodeBlocks", () => {
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+       .. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
           :language: shell
 
     `);
@@ -36,14 +36,15 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 0;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      writeFilepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      literalincludeFilepath: `/untested-examples/arbitrary-dir-name/file/1.sh`,
       codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [],
     };
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     expect(result)
-      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
    :language: sh\n\n`);
   });
 
@@ -51,7 +52,8 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 7;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      writeFilepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      literalincludeFilepath: `/untested-examples/arbitrary-dir-name/file/1.sh`,
       codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [],
@@ -59,7 +61,7 @@ describe("removeCodeBlocks", () => {
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with spaces indentWidth number of times
     expect(result)
-      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
        :language: sh\n\n`);
   });
 
@@ -67,7 +69,8 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 7;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      writeFilepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      literalincludeFilepath: `/untested-examples/arbitrary-dir-name/file/1.sh`,
       codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [":emphasize-lines: 7"],
@@ -75,7 +78,7 @@ describe("removeCodeBlocks", () => {
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with spaces indentWidth number of times
     expect(result)
-      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
        :language: sh
        :emphasize-lines: 7\n\n`);
   });
@@ -84,7 +87,8 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 0;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      writeFilepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      literalincludeFilepath: `/untested-examples/arbitrary-dir-name/file/1.sh`,
       codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [":emphasize-lines: 7", ":copyable: false"],
@@ -92,7 +96,7 @@ describe("removeCodeBlocks", () => {
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with 3 spaces if no indentWidth is specified
     expect(result)
-      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
    :language: sh
    :emphasize-lines: 7
    :copyable: false\n\n`);
@@ -115,7 +119,7 @@ describe("removeCodeBlocks", () => {
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt
+       .. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.txt
           :language: text\n\n`);
   });
 
@@ -136,7 +140,7 @@ describe("removeCodeBlocks", () => {
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt
+       .. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.txt
           :language: text\n\n`);
   });
 
@@ -162,12 +166,12 @@ describe("removeCodeBlocks", () => {
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
+       .. literalinclude:: /untested-examples/arbitrary-dir-name/file/1.sh
           :language: shell
 
        Then, do some other stuff.
        
-       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/2.sh
+       .. literalinclude:: /untested-examples/arbitrary-dir-name/file/2.sh
           :language: shell
 
     `);
