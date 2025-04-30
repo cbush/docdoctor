@@ -9,9 +9,11 @@ import { LanguageValueMappings } from "../types/LanguageValueMappings";
 import * as path from "path";
 import { LanguageMapper } from "../types/LanguageMapper";
 import { CodeBlockWithMetadata } from "../types/CodeBlockWithMetadata";
+import { PageWriteData } from "../types/PageWriteData";
 
 export const removeCodeBlocks = async (
-  filepath: string,
+  pageFilepath: string,
+  absFilepathToSource: string,
   source: string
 ): Promise<MagicString> => {
   const document = new MagicString(source);
@@ -21,6 +23,8 @@ export const removeCodeBlocks = async (
     position: true,
   });
 
+  const codeBlockDirectory =
+    makeCodeBlockDirectoryFromPageFilepath(pageFilepath);
   const codeBlocks: CodeBlockWithMetadata[] = [];
   let codeBlockInstance = 0;
   try {
@@ -38,7 +42,9 @@ export const removeCodeBlocks = async (
       // We use the code block instance number on the page as a name for the code block file
       codeBlockInstance++;
 
-      // If a writer has provided a language for the code block, its value is the `args` field
+      /* If a writer has provided a language for the code block, its value is the `args` field.
+       * If the writer has not provided a value, set the default lang value to 'text'.
+       */
       let language = "text";
       if (node.args !== undefined) {
         language = node.args as string;
@@ -79,7 +85,8 @@ export const removeCodeBlocks = async (
       );
 
       const codeBlockFilePath = makeCodeBlockFilePath(
-        filepath,
+        absFilepathToSource,
+        codeBlockDirectory,
         codeBlockInstance,
         langDetails.extension
       );
@@ -87,6 +94,7 @@ export const removeCodeBlocks = async (
       const codeBlockWithMetadata: CodeBlockWithMetadata = {
         language: langDetails.canonicalValue,
         filepath: codeBlockFilePath,
+        codeBlockDirectory: codeBlockDirectory,
         content: formattedCodeBlockText,
         optionLines: optionLines,
       };
@@ -124,7 +132,13 @@ export const removeCodeBlocks = async (
     return new MagicString(source); // Return unedited document
   }
   if (codeBlocks.length > 0) {
-    await writeCodeBlocksToFile(filepath, codeBlocks);
+    const pageWriteData: PageWriteData = {
+      inputFilepath: pageFilepath,
+      absFilepathToSource: absFilepathToSource,
+      codeBlockDirectory: codeBlockDirectory,
+      codeBlocks: codeBlocks,
+    };
+    await writeCodeBlocksToFile(pageWriteData);
   }
   return document;
 };
@@ -228,17 +242,22 @@ export const makeLiteralInclude = (
   return literalInclude;
 };
 
-const removeCodeBlocksInFile = async (filepath: string): Promise<void> => {
-  console.log(`Reading file at path ${filepath}`);
-  const rawText = await fs.readFile(filepath, "utf8");
-  console.log(`Visiting ${filepath}`);
-  const document = await removeCodeBlocks(filepath, rawText);
+const removeCodeBlocksInFile = async (pageFilepath: string): Promise<void> => {
+  console.log(`Reading file at path ${pageFilepath}`);
+  const absFilepathToSource = getAbsFilepathToSource(pageFilepath);
+  const rawText = await fs.readFile(pageFilepath, "utf8");
+  console.log(`Visiting ${pageFilepath}`);
+  const document = await removeCodeBlocks(
+    pageFilepath,
+    absFilepathToSource,
+    rawText
+  );
   if (!document.hasChanged()) {
-    console.log(`Visited ${filepath} -- no changes made`);
+    console.log(`Visited ${pageFilepath} -- no changes made`);
     return;
   }
-  console.log(`Updating ${filepath}`);
-  await fs.writeFile(filepath, document.toString(), "utf8");
+  console.log(`Updating ${pageFilepath}`);
+  await fs.writeFile(pageFilepath, document.toString(), "utf8");
 };
 
 /**
@@ -271,22 +290,18 @@ export type RemoveCodeBlocksArgs = {
  * Make a file path for the code block that we'll write to file, and we'll use the file path in the literalinclude that
  * replaces the code block directive.
  *
- * @param filepath - The existing docs file filepath, which we use as a directory to store the code blocks we write to file
+ * @param absFilepathToSource - The absolute filepath up to and including the source directory, to use when writing files from the rel filepath (codeBlockDirectory)
+ * @param codeBlockDirectory - The directory to use to write code blocks for the page, derived from the docs file filepath
  * @param instanceNumber - Because we don't have filenames for the code blocks, use the instance number of the code block on the page as the filename
  * @param fileExtension - The file extension associated with the canonical programming language, so we can write the code block to an appropriate file type
  */
 const makeCodeBlockFilePath = (
-  filepath: string,
+  absFilepathToSource: string,
+  codeBlockDirectory: string,
   instanceNumber: number,
   fileExtension: string
 ): string => {
-  const codeBlockDirectoryStructure =
-    makeCodeBlockDirectoryFromPageFilepath(filepath);
-  // TODO: Replace this with a relpath from the passed-in start path
-  const directoryAbsPath = path.join(
-    "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source",
-    codeBlockDirectoryStructure
-  );
+  const directoryAbsPath = path.join(absFilepathToSource, codeBlockDirectory);
   const filename = instanceNumber.toString() + fileExtension;
   return directoryAbsPath + "/" + filename;
 };
@@ -294,22 +309,17 @@ const makeCodeBlockFilePath = (
 /**
  * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `untested-files` directory
  *
- * @param filepath - The page file path, for creating a relevant directory so we can write files to it
- * @param codeBlocks - Array of code blocks from the page, with their associated metadata, for writing to file
+ * @param pageWriteData - Data required to write the code blocks to file, including path info, directory info, and the code block content
  */
 const writeCodeBlocksToFile = async (
-  filepath: string,
-  codeBlocks: CodeBlockWithMetadata[]
+  pageWriteData: PageWriteData
 ): Promise<void> => {
-  const codeBlockDirectoryStructure =
-    makeCodeBlockDirectoryFromPageFilepath(filepath);
-  // TODO: Replace this with a relpath from the passed-in start path
   const directoryAbsPath = path.join(
-    "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source",
-    codeBlockDirectoryStructure
+    pageWriteData.absFilepathToSource,
+    pageWriteData.codeBlockDirectory
   );
-  console.log(`Got ${codeBlocks.length} code blocks for page`);
-  for (const codeBlock of codeBlocks) {
+  console.log(`Got ${pageWriteData.codeBlocks.length} code blocks for page`);
+  for (const codeBlock of pageWriteData.codeBlocks) {
     // Ensure the directory structure exists
     try {
       await fs.mkdir(directoryAbsPath, { recursive: true });
@@ -329,7 +339,6 @@ const writeCodeBlocksToFile = async (
  * @param filepath - The filepath of the documentation page whose code blocks we're replacing with literalincludes
  * @returns A directory structure that matches the docs page location in the repo, whose last element is the name of the documentation page
  * */
-// TODO: Currently calling this twice - once from makeCodeBlockFilePath and once from writeCodeBlocksToFile. Store this as metadta on the page so we don't need to call it twice.
 const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
   const startDir = "source";
   const startIndex = filepath.indexOf(startDir);
@@ -355,6 +364,22 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
     codeBlockPageDir
   );
   return path.join(untestedDir, relPathIncludingSubdirs);
+};
+
+const getAbsFilepathToSource = (filepath: string): string => {
+  const relDir = "source";
+  const relIndex = filepath.indexOf(relDir);
+  if (relIndex === -1) {
+    throw new Error(
+      `The directory "${relDir}" was not found in the path "${filepath}"`
+    );
+  }
+
+  // Include the directory name and ending slash in the slice
+  const endIndex = relIndex + relDir.length;
+
+  // Create the path up to and including the source directory
+  return filepath.slice(0, endIndex);
 };
 
 /**
@@ -401,7 +426,6 @@ const commandModule: CommandModule<unknown, RemoveCodeBlocksArgs> = {
         `Remove code blocks command called with start directory: ${args.path}`
       );
       const { path } = args;
-      //await removeCodeBlocksInFile(path.toString());
       walkDirectory(path.toString(), removeCodeBlocksInFile)
         .then(() => console.log("Directory processing complete"))
         .catch((err) =>

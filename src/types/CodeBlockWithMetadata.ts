@@ -8,6 +8,8 @@ export type CodeBlockWithMetadata = {
   language: string;
   /** The file path where the code block will be written. Used to write to file and also as literalinclude file path */
   filepath: string;
+  /** The directory where we should write the code block, derived from the docs page filepath and page name. */
+  codeBlockDirectory: string;
   /** The contents of the code block, for writing to file */
   content: string;
   /** Any options that the writer specified on the original code block. Copied to literalinclude. */

@@ -1,8 +1,15 @@
 import { removeCodeBlocks, makeLiteralInclude } from "./removeCodeBlocks";
 import { CodeBlockWithMetadata } from "../types/CodeBlockWithMetadata";
 import { promises as fs } from "fs";
+import path from "path";
 
 describe("removeCodeBlocks", () => {
+  const absFilePathToSrcDir = path.join(
+    __dirname,
+    "test/removeCodeBlocks/source/"
+  );
+  const pageFilePath = `${absFilePathToSrcDir}arbitrary-dir-name/file.txt`;
+
   it("should replace a code blocks in the rST with a literalinclude", async () => {
     const source = `Copy and paste the following into the search/input box.
 
@@ -12,13 +19,14 @@ describe("removeCodeBlocks", () => {
 
     `;
     const result = await removeCodeBlocks(
-      "source/arbitrary-dir-name/file.txt",
+      pageFilePath,
+      absFilePathToSrcDir,
       source
     );
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
           :language: shell
 
     `);
@@ -28,13 +36,14 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 0;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh`,
+      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [],
     };
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     expect(result)
-      .toBe(`.. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
    :language: sh\n\n`);
   });
 
@@ -42,14 +51,15 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 7;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh`,
+      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [],
     };
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with spaces indentWidth number of times
     expect(result)
-      .toBe(`.. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
        :language: sh\n\n`);
   });
 
@@ -57,14 +67,15 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 7;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh`,
+      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [":emphasize-lines: 7"],
     };
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with spaces indentWidth number of times
     expect(result)
-      .toBe(`.. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
        :language: sh
        :emphasize-lines: 7\n\n`);
   });
@@ -73,14 +84,15 @@ describe("removeCodeBlocks", () => {
     const indentWidth = 0;
     const codeBlockMetadata: CodeBlockWithMetadata = {
       language: "sh",
-      filepath: `/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh`,
+      filepath: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh`,
+      codeBlockDirectory: `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/`,
       content: "https://github.com/realm/realm-swift.git",
       optionLines: [":emphasize-lines: 7", ":copyable: false"],
     };
     const result = makeLiteralInclude(codeBlockMetadata, indentWidth);
     // The literalinclude line should start at the beginning, but subsequent option lines should be indented with 3 spaces if no indentWidth is specified
     expect(result)
-      .toBe(`.. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+      .toBe(`.. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
    :language: sh
    :emphasize-lines: 7
    :copyable: false\n\n`);
@@ -95,14 +107,15 @@ describe("removeCodeBlocks", () => {
 
 `;
     const result = await removeCodeBlocks(
-      "source/arbitrary-dir-name/file.txt",
+      pageFilePath,
+      absFilePathToSrcDir,
       source
     );
     // When an invalid programming language is specified, the mapper outputs 'text' for syntax highlighting purposes and writes the code to a '.txt' file
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.txt
+       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt
           :language: text\n\n`);
   });
 
@@ -115,14 +128,15 @@ describe("removeCodeBlocks", () => {
 
 `;
     const result = await removeCodeBlocks(
-      "source/arbitrary-dir-name/file.txt",
+      pageFilePath,
+      absFilePathToSrcDir,
       source
     );
     // When no programming language is specified, the mapper outputs 'text' for syntax highlighting purposes and writes the code to a '.txt' file
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.txt
+       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt
           :language: text\n\n`);
   });
 
@@ -141,18 +155,19 @@ describe("removeCodeBlocks", () => {
 
     `;
     const result = await removeCodeBlocks(
-      "source/arbitrary-dir-name/file.txt",
+      pageFilePath,
+      absFilePathToSrcDir,
       source
     );
     expect(result.toString())
       .toBe(`Copy and paste the following into the search/input box.
 
-       .. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.sh
+       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.sh
           :language: shell
 
        Then, do some other stuff.
        
-       .. literalinclude:: /Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/2.sh
+       .. literalinclude:: ${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/2.sh
           :language: shell
 
     `);
@@ -166,9 +181,9 @@ describe("removeCodeBlocks", () => {
    https://github.com/realm/realm-swift.git
 
 `;
-    await removeCodeBlocks("source/arbitrary-dir-name/file.txt", source);
+    await removeCodeBlocks(pageFilePath, absFilePathToSrcDir, source);
     const fileContents = await fs.readFile(
-      "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.txt",
+      `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt`,
       "utf8"
     );
     expect(fileContents).toBe(`https://github.com/realm/realm-swift.git\n`);
@@ -198,9 +213,9 @@ describe("removeCodeBlocks", () => {
    end
 
 `;
-    await removeCodeBlocks("source/arbitrary-dir-name/file.txt", source);
+    await removeCodeBlocks(pageFilePath, absFilePathToSrcDir, source);
     const fileContents = await fs.readFile(
-      "/Users/dachary.carey/workspace/docdoctor/test/removeCodeBlocks/source/untested-examples/arbitrary-dir-name/file/1.txt",
+      `${absFilePathToSrcDir}untested-examples/arbitrary-dir-name/file/1.txt`,
       "utf8"
     );
     expect(fileContents).toBe(
