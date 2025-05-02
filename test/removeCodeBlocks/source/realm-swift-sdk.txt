@@ -57,9 +57,8 @@ Use Swift to idiomatically :ref:`define an object schema <ios-define-a-realm-obj
 
 Add an arbitrary code block just to confirm the command correctly handles source files at the root of the dir:
 
-.. code-block:: shell
-
-   node ./build/main removeCodeBlocks /path/to/start/dir/
+.. literalinclude:: /untested-examples/realm-swift-sdk/1.sh
+   :language: shell
 
 Create an Object
 ~~~~~~~~~~~~~~~~

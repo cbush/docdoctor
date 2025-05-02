@@ -1,16 +1,16 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
 import MagicString from "magic-string";
-import { visit } from "../tree";
-import restructured from "../restructured";
-import { CanonicalLanguageValues } from "../types/CanonicalLanguageValues";
-import { LanguageFileExtensions } from "../types/LanguageFileExtensions";
-import { LanguageValueMappings } from "../types/LanguageValueMappings";
+import { visit } from "../../tree";
+import restructured from "../../restructured";
+import { CanonicalLanguageValues } from "./CanonicalLanguageValues";
+import { LanguageFileExtensions } from "./LanguageFileExtensions";
+import { LanguageValueMappings } from "./LanguageValueMappings";
 import * as path from "path";
-import { LanguageMapper } from "../types/LanguageMapper";
-import { CodeBlockWithMetadata } from "../types/CodeBlockWithMetadata";
-import { PageWriteData } from "../types/PageWriteData";
-import { CodeNode } from "../types/CodeNode";
+import { LanguageMapper } from "./LanguageMapper";
+import { CodeBlockWithMetadata } from "./CodeBlockWithMetadata";
+import { PageWriteData } from "./PageWriteData";
+import { CodeNode } from "./CodeNode";
 
 export const removeCodeBlocks = async (
   pageFilepath: string,
@@ -60,7 +60,7 @@ export const removeCodeBlocks = async (
 
       /* The 'restructured' library that this project uses handles child nodes
        * suboptimally. It interprets the code block value as many different child
-       * nodes, often of different directive types with different structures.
+       * nodes, often of different directive code-blocks with different structures.
        * Instead of trying to derive the code block text as through reading the
        * values of many different child nodes, we capture the entirety of the
        * `code-block` directive as text, and manipulate it to get the code block

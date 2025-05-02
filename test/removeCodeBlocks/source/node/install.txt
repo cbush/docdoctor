@@ -56,10 +56,8 @@ Realm Node.js SDK to it.
       with your desired project name. Answer all of the prompts
       to fill out the details of your project.
 
-      .. code-block:: bash
-
-         mkdir MyRealmApp && cd MyRealmApp && npm init
-
+      .. literalinclude:: /untested-examples/node/install/1.sh
+         :language: bash
 
    .. step:: Install Realm with NPM
 
@@ -67,10 +65,8 @@ Realm Node.js SDK to it.
       In your Node.js project directory, use the following command
       to add Realm to your project:
 
-      .. code-block:: bash
-
-         npm install realm
-
+      .. literalinclude:: /untested-examples/node/install/2.sh
+         :language: bash
 
    .. step:: Enable TypeScript (optional)
 
@@ -101,10 +97,8 @@ running Raspberry Pi OS (formerly Raspbian), follow the steps below:
       it from source. To do this, you'll need a working C++ compiler. To
       install such a compiler on your IoT device, run the following command:
 
-      .. code-block:: bash
-
-         sudo apt install build-essential g++ libssl-dev
-
+      .. literalinclude:: /untested-examples/node/install/3.sh
+         :language: bash
 
    .. step:: Create a Node.js Project
 
@@ -115,10 +109,8 @@ running Raspberry Pi OS (formerly Raspbian), follow the steps below:
       with your desired project name. Answer all of the prompts
       to fill out the details of your project.
 
-      .. code-block:: bash
-
-         mkdir MyRealmApp && cd MyRealmApp && npm init
-
+      .. literalinclude:: /untested-examples/node/install/4.sh
+         :language: bash
 
    .. step:: Install Realm with NPM
 
@@ -126,10 +118,8 @@ running Raspberry Pi OS (formerly Raspbian), follow the steps below:
       In your Node.js project directory, use the following command
       to add Realm to your project:
 
-      .. code-block:: bash
-
-         npm install realm
-
+      .. literalinclude:: /untested-examples/node/install/5.sh
+         :language: bash
 
    .. step:: Enable TypeScript (optional)
 
@@ -154,13 +144,12 @@ you want to use Realm:
    .. tab::
       :tabid: javascript
 
-      .. code-block:: javascript
-
-         const Realm = require("realm");
+      .. literalinclude:: /untested-examples/node/install/6.js
+         :language: javascript
 
    .. tab::
       :tabid: typescript
 
-      .. code-block:: typescript
+      .. literalinclude:: /untested-examples/node/install/7.ts
+         :language: typescript
 
-         import Realm from "realm";
