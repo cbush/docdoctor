@@ -44,9 +44,8 @@ export const removeCodeBlocks = async (
       // We use the code block instance number on the page as a name for the code block file
       codeBlockInstance++;
 
-      /* If a writer has provided a language for the code block, its value is the `args` field.
-       * If the writer has not provided a value, set the default lang value to 'text'.
-       */
+      // If a writer has provided a language for the code block, its value is the `args` field.
+      // If the writer has not provided a value, set the default lang value to 'text'.
       let language = "text";
       if (codeNode.args !== undefined) {
         language = codeNode.args as string;
@@ -58,22 +57,20 @@ export const removeCodeBlocks = async (
       const optionLines =
         codeNode.optionLines?.map((option) => option.trim()) ?? [];
 
-      /* The 'restructured' library that this project uses handles child nodes
-       * suboptimally. It interprets the code block value as many different child
-       * nodes, often of different directive code-blocks with different structures.
-       * Instead of trying to derive the code block text as through reading the
-       * values of many different child nodes, we capture the entirety of the
-       * `code-block` directive as text, and manipulate it to get the code block
-       * content, remove any nested indentation, and write it to file.
-       */
+      // The 'restructured' library that this project uses handles child nodes
+      // suboptimally. It interprets the code block value as many different child
+      // nodes, often of different directive code-blocks with different structures.
+      // Instead of trying to derive the code block text as through reading the
+      // values of many different child nodes, we capture the entirety of the
+      // `code-block` directive as text, and manipulate it to get the code block
+      // content, remove any nested indentation, and write it to file.
       const directiveAndValueText = document.slice(
         codeNode.position.start.offset,
         codeNode.position.end.offset
       );
 
-      /* Use this to trim any indentation from the code block text, as when the
-       * code block is nested in a tab or other directive type.
-       */
+      // Use this to trim any indentation from the code block text, as when the
+      // code block is nested in a tab or other directive type.
       const trimCodeBlockWidth = node.position.start.column;
       const formattedCodeBlockText = getFormattedCodeBlockTextFromDirective(
         directiveAndValueText,
@@ -103,9 +100,8 @@ export const removeCodeBlocks = async (
       };
       codeBlocks.push(codeBlockWithMetadata);
 
-      /* If there is an indent width, as when the code block is nested in a 'step' directive
-         or a 'tab' directive, calculate an offset for the start location to account for the indent
-      */
+      // If there is an indent width, as when the code block is nested in a 'step' directive
+      // or a 'tab' directive, calculate an offset for the start location to account for the indent
       const literalIncludeStartIndentWidth = codeNode.indent?.width ?? 0;
 
       // Construct literalinclude
@@ -213,11 +209,10 @@ export const makeLiteralInclude = (
   indentWidth: number
 ): string => {
   let literalInclude = `.. literalinclude:: ${codeBlock.literalincludeFilepath}\n`;
-  /* Some of the directive nodes have specific indents, such as when they're used in
-     a 'step' directive or a 'tab' directive. If there is a specific indent, add
-     that indent's worth of spaces to the front of the option lines to get them to line up.
-     Otherwise, add three spaces to get the options to line up with the base directive.
-   */
+  // Some of the directive nodes have specific indents, such as when they're used in
+  // a 'step' directive or a 'tab' directive. If there is a specific indent, add
+  // that indent's worth of spaces to the front of the option lines to get them to line up.
+  // Otherwise, add three spaces to get the options to line up with the base directive.
   let padding = "";
   if (indentWidth > 0) {
     padding = " ".repeat(indentWidth);

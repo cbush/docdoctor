@@ -7,11 +7,6 @@ import { LanguageFileExtensions } from "./LanguageFileExtensions";
  * a 'canonical' language value and file extension. Used to normalize the programming
  * languages used on code-block directives when we replace them with literalincludes.
  */
-/*
- * We use this structure instead of a map because we don't *want* writers to add new languages.
- * If writeres add unsupported languages, we map them to "undefined" and make the
- * language text and the file extension .txt
- */
 export const LanguageValueMappings: Record<string, LanguageMapper> = {
   "": {
     canonicalValue: CanonicalLanguageValues.UNDEFINED,
