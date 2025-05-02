@@ -10,7 +10,7 @@ describe("removeCodeBlocks", () => {
   );
   const pageFilePath = `${absFilePathToSrcDir}arbitrary-dir-name/file.txt`;
 
-  it("should replace a code blocks in the rST with a literalinclude", async () => {
+  it("should replace a code block in the rST with a literalinclude", async () => {
     const source = `Copy and paste the following into the search/input box.
 
        .. code-block:: sh
