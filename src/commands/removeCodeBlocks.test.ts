@@ -1,5 +1,5 @@
 import { removeCodeBlocks, makeLiteralInclude } from "./removeCodeBlocks";
-import { CodeBlockWithMetadata } from "./CodeBlockWithMetadata";
+import { CodeBlockWithMetadata } from "../code-blocks/CodeBlockWithMetadata";
 import { promises as fs } from "fs";
 import path from "path";
 

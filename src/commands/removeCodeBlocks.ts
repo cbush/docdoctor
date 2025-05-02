@@ -1,16 +1,16 @@
 import { CommandModule } from "yargs";
 import { promises as fs } from "fs";
 import MagicString from "magic-string";
-import { visit } from "../../tree";
-import restructured from "../../restructured";
-import { CanonicalLanguageValues } from "./CanonicalLanguageValues";
-import { LanguageFileExtensions } from "./LanguageFileExtensions";
-import { LanguageValueMappings } from "./LanguageValueMappings";
+import { visit } from "../tree";
+import restructured from "../restructured";
+import { CanonicalLanguageValues } from "../code-blocks/CanonicalLanguageValues";
+import { LanguageFileExtensions } from "../code-blocks/LanguageFileExtensions";
+import { LanguageValueMappings } from "../code-blocks/LanguageValueMappings";
 import * as path from "path";
-import { LanguageMapper } from "./LanguageMapper";
-import { CodeBlockWithMetadata } from "./CodeBlockWithMetadata";
-import { PageWriteData } from "./PageWriteData";
-import { CodeNode } from "./CodeNode";
+import { LanguageMapper } from "../code-blocks/LanguageMapper";
+import { CodeBlockWithMetadata } from "../code-blocks/CodeBlockWithMetadata";
+import { PageWriteData } from "../code-blocks/PageWriteData";
+import { CodeNode } from "../code-blocks/CodeNode";
 
 export const removeCodeBlocks = async (
   pageFilepath: string,
