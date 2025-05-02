@@ -19,11 +19,6 @@ export const LanguageValueMappings: LanguageMapper[] = [
     extension: LanguageFileExtensions.UNDEFINED,
   },
   {
-    directiveValue: "",
-    canonicalValue: CanonicalLanguageValues.UNDEFINED,
-    extension: LanguageFileExtensions.UNDEFINED,
-  },
-  {
     directiveValue: "bash",
     canonicalValue: CanonicalLanguageValues.BASH,
     extension: LanguageFileExtensions.BASH,
