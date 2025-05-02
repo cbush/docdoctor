@@ -10,6 +10,7 @@ import * as path from "path";
 import { LanguageMapper } from "../types/LanguageMapper";
 import { CodeBlockWithMetadata } from "../types/CodeBlockWithMetadata";
 import { PageWriteData } from "../types/PageWriteData";
+import { CodeNode } from "../types/CodeNode";
 
 export const removeCodeBlocks = async (
   pageFilepath: string,
@@ -38,6 +39,7 @@ export const removeCodeBlocks = async (
       if (node["directive"] !== "code-block") {
         return;
       }
+      const codeNode = node as CodeNode;
 
       // We use the code block instance number on the page as a name for the code block file
       codeBlockInstance++;
@@ -46,21 +48,15 @@ export const removeCodeBlocks = async (
        * If the writer has not provided a value, set the default lang value to 'text'.
        */
       let language = "text";
-      if (node.args !== undefined) {
-        language = node.args as string;
+      if (codeNode.args !== undefined) {
+        language = codeNode.args as string;
       }
       // Normalize the language value, and get the corresponding file extension
       const langDetails = getLangDetails(language);
 
       // Capture any option lines that are present on the code block, such as ':emphasize-lines: 2'
-      const optionLines: string[] = [];
-      if (node["optionLines"] !== undefined) {
-        const optionsFromDirective = node["optionLines"] as string[];
-        for (const option of optionsFromDirective) {
-          const trimmedOption = option.trim();
-          optionLines.push(trimmedOption);
-        }
-      }
+      const optionLines =
+        codeNode.optionLines?.map((option) => option.trim()) ?? [];
 
       /* The 'restructured' library that this project uses handles child nodes
        * suboptimally. It interprets the code block value as many different child
@@ -71,8 +67,8 @@ export const removeCodeBlocks = async (
        * content, remove any nested indentation, and write it to file.
        */
       const directiveAndValueText = document.slice(
-        node.position.start.offset,
-        node.position.end.offset
+        codeNode.position.start.offset,
+        codeNode.position.end.offset
       );
 
       /* Use this to trim any indentation from the code block text, as when the
@@ -110,13 +106,7 @@ export const removeCodeBlocks = async (
       /* If there is an indent width, as when the code block is nested in a 'step' directive
          or a 'tab' directive, calculate an offset for the start location to account for the indent
       */
-      let literalIncludeStartIndentWidth = 0;
-      if (node["indent"] !== undefined) {
-        const indentDetails = node["indent"];
-        if (indentDetails?.width !== undefined) {
-          literalIncludeStartIndentWidth = indentDetails?.width;
-        }
-      }
+      const literalIncludeStartIndentWidth = codeNode.indent?.width ?? 0;
 
       // Construct literalinclude
       const literalInclude = makeLiteralInclude(
@@ -125,8 +115,8 @@ export const removeCodeBlocks = async (
       );
 
       // Replace original code block directive with literalinclude
-      let start = node.position.start.offset;
-      const end = node.position.end.offset;
+      let start = codeNode.position.start.offset;
+      const end = codeNode.position.end.offset;
 
       if (literalIncludeStartIndentWidth > 0) {
         // Subtract three from the indent width for the `.. ` at the beginning of the code-block directive
@@ -238,12 +228,11 @@ export const makeLiteralInclude = (
   literalInclude += padding + `:language: ${codeBlock.language}\n`;
 
   // If the code-block has additional options, add them after the language
-  const optionCount = codeBlock.optionLines.length;
-  if (optionCount > 0) {
-    for (const option of codeBlock.optionLines) {
-      literalInclude += padding + option + `\n`;
-    }
+  if (codeBlock.optionLines.length > 0) {
+    literalInclude +=
+      codeBlock.optionLines.map((option) => padding + option).join("\n") + "\n";
   }
+
   // Add another newline to the end of the literalinclude to get an empty line after the directive
   literalInclude += `\n`;
   return literalInclude;
