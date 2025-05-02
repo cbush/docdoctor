@@ -12,190 +12,153 @@ import { LanguageFileExtensions } from "./LanguageFileExtensions";
  * If writeres add unsupported languages, we map them to "undefined" and make the
  * language text and the file extension .txt
  */
-export const LanguageValueMappings: LanguageMapper[] = [
-  {
-    directiveValue: "",
+export const LanguageValueMappings: Record<string, LanguageMapper> = {
+  "": {
     canonicalValue: CanonicalLanguageValues.UNDEFINED,
     extension: LanguageFileExtensions.UNDEFINED,
   },
-  {
-    directiveValue: "bash",
+  bash: {
     canonicalValue: CanonicalLanguageValues.BASH,
     extension: LanguageFileExtensions.BASH,
   },
-  {
-    directiveValue: "bat",
+  bat: {
     canonicalValue: CanonicalLanguageValues.BATCH,
     extension: LanguageFileExtensions.BATCH,
   },
-  {
-    directiveValue: "c",
+  c: {
     canonicalValue: CanonicalLanguageValues.C,
     extension: LanguageFileExtensions.C,
   },
-  {
-    directiveValue: "cfg",
+  cfg: {
     canonicalValue: CanonicalLanguageValues.CFG,
     extension: LanguageFileExtensions.CFG,
   },
-  {
-    directiveValue: "console",
+  console: {
     canonicalValue: CanonicalLanguageValues.SHELL,
     extension: LanguageFileExtensions.SHELL,
   },
-  {
-    directiveValue: "cpp",
+  cpp: {
     canonicalValue: CanonicalLanguageValues.CPP,
     extension: LanguageFileExtensions.CPP,
   },
-  {
-    directiveValue: "cs",
+  cs: {
     canonicalValue: CanonicalLanguageValues.CSHARP,
     extension: LanguageFileExtensions.CSHARP,
   },
-  {
-    directiveValue: "csharp",
+  csharp: {
     canonicalValue: CanonicalLanguageValues.CSHARP,
     extension: LanguageFileExtensions.CSHARP,
   },
-  {
-    directiveValue: "go",
+  go: {
     canonicalValue: CanonicalLanguageValues.GO,
     extension: LanguageFileExtensions.GO,
   },
-  {
-    directiveValue: "golang",
+  golang: {
     canonicalValue: CanonicalLanguageValues.GO,
     extension: LanguageFileExtensions.GO,
   },
-  {
-    directiveValue: "groovy",
+  groovy: {
     canonicalValue: CanonicalLanguageValues.GROOVY,
     extension: LanguageFileExtensions.GROOVY,
   },
-  {
-    directiveValue: "http",
+  http: {
     canonicalValue: CanonicalLanguageValues.HTTP,
     extension: LanguageFileExtensions.TEXT,
   },
-  {
-    directiveValue: "ini",
+  ini: {
     canonicalValue: CanonicalLanguageValues.INI,
     extension: LanguageFileExtensions.INI,
   },
-  {
-    directiveValue: "java",
+  java: {
     canonicalValue: CanonicalLanguageValues.JAVA,
     extension: LanguageFileExtensions.JAVA,
   },
-  {
-    directiveValue: "javascript",
+  javascript: {
     canonicalValue: CanonicalLanguageValues.JAVASCRIPT,
     extension: LanguageFileExtensions.JAVASCRIPT,
   },
-  {
-    directiveValue: "js",
+  js: {
     canonicalValue: CanonicalLanguageValues.JAVASCRIPT,
     extension: LanguageFileExtensions.JAVASCRIPT,
   },
-  {
-    directiveValue: "json",
+  json: {
     canonicalValue: CanonicalLanguageValues.JSON,
     extension: LanguageFileExtensions.JSON,
   },
-  {
-    directiveValue: "JSON",
+  JSON: {
     canonicalValue: CanonicalLanguageValues.JSON,
     extension: LanguageFileExtensions.JSON,
   },
-  {
-    directiveValue: "kotlin",
+  kotlin: {
     canonicalValue: CanonicalLanguageValues.KOTLIN,
     extension: LanguageFileExtensions.KOTLIN,
   },
-  {
-    directiveValue: "none",
+  none: {
     canonicalValue: CanonicalLanguageValues.NONE,
     extension: LanguageFileExtensions.NONE,
   },
-  {
-    directiveValue: "powershell",
+  powershell: {
     canonicalValue: CanonicalLanguageValues.POWERSHELL,
     extension: LanguageFileExtensions.POWERSHELL,
   },
-  {
-    directiveValue: "php",
+  php: {
     canonicalValue: CanonicalLanguageValues.PHP,
     extension: LanguageFileExtensions.PHP,
   },
-  {
-    directiveValue: "ps1",
+  ps1: {
     canonicalValue: CanonicalLanguageValues.POWERSHELL,
     extension: LanguageFileExtensions.POWERSHELL,
   },
-  {
-    directiveValue: "python",
+  python: {
     canonicalValue: CanonicalLanguageValues.PYTHON,
     extension: LanguageFileExtensions.PYTHON,
   },
-  {
-    directiveValue: "ruby",
+  ruby: {
     canonicalValue: CanonicalLanguageValues.RUBY,
     extension: LanguageFileExtensions.RUBY,
   },
-  {
-    directiveValue: "rust",
+  rust: {
     canonicalValue: CanonicalLanguageValues.RUST,
     extension: LanguageFileExtensions.RUST,
   },
-  {
-    directiveValue: "scala",
+  scala: {
     canonicalValue: CanonicalLanguageValues.SCALA,
     extension: LanguageFileExtensions.SCALA,
   },
-  {
-    directiveValue: "sh",
+  sh: {
     canonicalValue: CanonicalLanguageValues.SHELL,
     extension: LanguageFileExtensions.SHELL,
   },
-  {
-    directiveValue: "shell",
+  shell: {
     canonicalValue: CanonicalLanguageValues.SHELL,
     extension: LanguageFileExtensions.SHELL,
   },
-  {
-    directiveValue: "sql",
+  sql: {
     canonicalValue: CanonicalLanguageValues.SQL,
     extension: LanguageFileExtensions.SQL,
   },
-  {
-    directiveValue: "swift",
+  swift: {
     canonicalValue: CanonicalLanguageValues.SWIFT,
     extension: LanguageFileExtensions.SWIFT,
   },
-  {
-    directiveValue: "text",
+  text: {
     canonicalValue: CanonicalLanguageValues.TEXT,
     extension: LanguageFileExtensions.TEXT,
   },
-  {
-    directiveValue: "typescript",
+  typescript: {
     canonicalValue: CanonicalLanguageValues.TYPESCRIPT,
     extension: LanguageFileExtensions.TYPESCRIPT,
   },
-  {
-    directiveValue: "undefined",
+  undefined: {
     canonicalValue: CanonicalLanguageValues.UNDEFINED,
     extension: LanguageFileExtensions.UNDEFINED,
   },
-  {
-    directiveValue: "xml",
+  xml: {
     canonicalValue: CanonicalLanguageValues.XML,
     extension: LanguageFileExtensions.XML,
   },
-  {
-    directiveValue: "yaml",
+  yaml: {
     canonicalValue: CanonicalLanguageValues.YAML,
     extension: LanguageFileExtensions.YAML,
   },
-];
+};

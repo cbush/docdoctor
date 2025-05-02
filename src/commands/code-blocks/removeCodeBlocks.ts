@@ -263,19 +263,12 @@ const removeCodeBlocksInFile = async (pageFilepath: string): Promise<void> => {
  * @returns { LanguageMapper } struct that contains the directive language value, the normalized lang value, and file extension
  */
 const getLangDetails = (directiveLang: string): LanguageMapper => {
-  const languageMapping = LanguageValueMappings.find(
-    (mapper) => mapper.directiveValue === directiveLang
-  );
-  // If no language is provided, or an invalid language is provided, set it as "undefined" and use the associated file extension (text, .txt)
-  if (languageMapping === undefined) {
-    return {
-      directiveValue: "none",
+  return (
+    LanguageValueMappings[directiveLang] ?? {
       canonicalValue: CanonicalLanguageValues.UNDEFINED,
       extension: LanguageFileExtensions.UNDEFINED,
-    };
-  } else {
-    return languageMapping;
-  }
+    }
+  );
 };
 
 export type RemoveCodeBlocksArgs = {
