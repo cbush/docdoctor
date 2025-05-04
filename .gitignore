@@ -126,3 +126,8 @@ build/
 # vscode
 .vscode/
 
+# JetBrains
+.idea/
+
+# Output test files for removeCodeBlocks command
+untested-examples/

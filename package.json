@@ -45,6 +45,7 @@
     "restructured": "^0.0.11",
     "toml": "^3.0.0",
     "tree-visit": "^0.1.2",
+    "ts-jest": "^29.3.2",
     "yargs": "^15.4.1"
   }
 }

@@ -1,0 +1,35 @@
+/**
+ * An enum of constants that represent the string values for "permitted" programming languages
+ * Used to normalize the programming languages that writers provide in directives
+ */
+export enum CanonicalLanguageValues {
+  BASH = "bash",
+  BATCH = "batch",
+  C = "c",
+  CFG = "cfg",
+  CPP = "cpp",
+  CSHARP = "csharp",
+  GO = "go",
+  GROOVY = "groovy",
+  HTTP = "http",
+  INI = "ini",
+  JAVA = "java",
+  JAVASCRIPT = "javascript",
+  JSON = "json",
+  KOTLIN = "kotlin",
+  PHP = "php",
+  POWERSHELL = "powershell",
+  PYTHON = "python",
+  NONE = "text",
+  RUBY = "ruby",
+  RUST = "rust",
+  SCALA = "scala",
+  SHELL = "shell",
+  SQL = "sql",
+  SWIFT = "swift",
+  TEXT = "text",
+  TYPESCRIPT = "typescript",
+  UNDEFINED = "text",
+  XML = "xml",
+  YAML = "yaml",
+}
