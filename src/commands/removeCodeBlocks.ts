@@ -69,12 +69,8 @@ export const removeCodeBlocks = async (
         codeNode.position.end.offset
       );
 
-      // Use this to trim any indentation from the code block text, as when the
-      // code block is nested in a tab or other directive type.
-      const trimCodeBlockWidth = node.position.start.column;
       const formattedCodeBlockText = getFormattedCodeBlockTextFromDirective(
-        directiveAndValueText,
-        trimCodeBlockWidth
+        directiveAndValueText
       );
 
       const codeBlockWriteFilePath = makeCodeBlockWriteFilePath(
@@ -141,9 +137,8 @@ export const removeCodeBlocks = async (
  * @param inputString - The entirety of the code block directive, including the `.. code-block::` directive start and code content
  * @param indentWidth - The start column of the code block text, to properly adjust the offset to un-indent nested content
  */
-const getFormattedCodeBlockTextFromDirective = (
-  inputString: string,
-  indentWidth: number
+export const getFormattedCodeBlockTextFromDirective = (
+  inputString: string
 ): string => {
   // Split the input string into lines
   const lines = inputString.split("\n");
@@ -168,8 +163,15 @@ const getFormattedCodeBlockTextFromDirective = (
   // Collect the remaining lines starting from the first non-meta line
   const remainingLines = lines.slice(index);
   const trimmedLines: string[] = [];
+  let isFirstLine = true;
+  let indentOffset = 0;
   for (const line of remainingLines) {
-    trimmedLines.push(trimLeadingNSpaces(line, indentWidth + 2));
+    // Calculate the offset for whitespace from the first line. Remove the same N character count from that and every subsequent line.
+    if (isFirstLine) {
+      indentOffset = countLeadingWhitespace(line);
+      isFirstLine = false;
+    }
+    trimmedLines.push(trimLeadingNSpaces(line, indentOffset));
   }
 
   // Return the remaining lines joined back into a string
@@ -182,10 +184,23 @@ const getFormattedCodeBlockTextFromDirective = (
 };
 
 /**
+ * Calculate the whitespace at the start of a code example. Used to un-indent nested content.
+ *
+ * @param str - The string to trim - in this case, the first line of the code block text
+ */
+function countLeadingWhitespace(str: string): number {
+  // Use a regular expression to match only leading whitespace characters
+  const match = str.match(/^\s*/);
+
+  // If there's a match, return its length; otherwise, return 0.
+  return match ? match[0].length : 0;
+}
+
+/**
  * Remove the first N spaces from a line. Used to un-indent nested content.
  *
  * @param input - The string to trim - in this case, code block text
- * @param N - The number of spaces to trim from the line, derived from the node.position.start.column
+ * @param N - The number of spaces to trim from the line, derived from the count of whitespace at the start of the first line
  */
 const trimLeadingNSpaces = (input: string, N: number): string => {
   let index = 0;
