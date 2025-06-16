@@ -69,12 +69,8 @@ export const removeCodeBlocks = async (
         codeNode.position.end.offset
       );
 
-      // Use this to trim any indentation from the code block text, as when the
-      // code block is nested in a tab or other directive type.
-      const trimCodeBlockWidth = node.position.start.column;
       const formattedCodeBlockText = getFormattedCodeBlockTextFromDirective(
-        directiveAndValueText,
-        trimCodeBlockWidth
+        directiveAndValueText
       );
 
       const codeBlockWriteFilePath = makeCodeBlockWriteFilePath(
@@ -139,11 +135,9 @@ export const removeCodeBlocks = async (
 /**
  * Remove the code block directive and option lines, and get only the code text itself
  * @param inputString - The entirety of the code block directive, including the `.. code-block::` directive start and code content
- * @param indentWidth - The start column of the code block text, to properly adjust the offset to un-indent nested content
  */
-const getFormattedCodeBlockTextFromDirective = (
-  inputString: string,
-  indentWidth: number
+export const getFormattedCodeBlockTextFromDirective = (
+  inputString: string
 ): string => {
   // Split the input string into lines
   const lines = inputString.split("\n");
@@ -168,8 +162,12 @@ const getFormattedCodeBlockTextFromDirective = (
   // Collect the remaining lines starting from the first non-meta line
   const remainingLines = lines.slice(index);
   const trimmedLines: string[] = [];
-  for (const line of remainingLines) {
-    trimmedLines.push(trimLeadingNSpaces(line, indentWidth + 2));
+  if (remainingLines.length > 0) {
+    // Calculate the offset for whitespace from the first line. Remove the same N character count from that and every subsequent line.
+    const indentOffset = countLeadingWhitespace(remainingLines[0]);
+    trimmedLines.push(
+      ...remainingLines.map((line) => trimLeadingNSpaces(line, indentOffset))
+    );
   }
 
   // Return the remaining lines joined back into a string
@@ -182,10 +180,23 @@ const getFormattedCodeBlockTextFromDirective = (
 };
 
 /**
+ * Calculate the whitespace at the start of a code example. Used to un-indent nested content.
+ *
+ * @param str - The string to trim - in this case, the first line of the code block text
+ */
+function countLeadingWhitespace(str: string): number {
+  // Use a regular expression to match only leading whitespace characters
+  const match = str.match(/^\s*/);
+
+  // If there's a match, return its length; otherwise, return 0.
+  return match ? match[0].length : 0;
+}
+
+/**
  * Remove the first N spaces from a line. Used to un-indent nested content.
  *
  * @param input - The string to trim - in this case, code block text
- * @param N - The number of spaces to trim from the line, derived from the node.position.start.column
+ * @param N - The number of spaces to trim from the line, derived from the count of whitespace at the start of the first line
  */
 const trimLeadingNSpaces = (input: string, N: number): string => {
   let index = 0;
@@ -309,7 +320,7 @@ const makeLiteralincludeFilePath = (
 };
 
 /**
- * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `untested-files` directory
+ * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `code-examples` directory
  *
  * @param pageWriteData - Data required to write the code blocks to file, including path info, directory info, and the code block content
  */
@@ -357,17 +368,14 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
     pathSegments.length > 1 ? pathSegments.slice(1) : [];
   // Join the remaining segments back into a path
   const pathMinusStartDir = `${path.sep}${removedFirstSegment.join(path.sep)}`;
-  console.log(`Path minus start dir is: ${pathMinusStartDir}`);
   const baseName = path.basename(filepath);
   const extension = path.extname(filepath);
-  const untestedDir = "untested-examples";
+  const untestedDir = "code-examples";
   const codeBlockPageDir = baseName.replace(extension, "");
-  console.log(`Code block page dir is: ${codeBlockPageDir}`);
   const relPathIncludingSubdirs = pathMinusStartDir.replace(
     baseName,
     codeBlockPageDir
   );
-  console.log(`Rel path including subdirs is: ${codeBlockPageDir}`);
   return path.join(untestedDir, relPathIncludingSubdirs);
 };
 
@@ -404,8 +412,8 @@ async function walkDirectory(
     const stats = await fs.stat(entryPath);
 
     if (stats.isDirectory()) {
-      // We don't want to process any files in the 'untested-examples' directory
-      if (entryPath.includes("untested-examples")) {
+      // We don't want to process any files in the 'code-examples' directory
+      if (entryPath.includes("code-examples")) {
         continue;
       }
       await walkDirectory(entryPath, callback); // Recurse into subdirectory
