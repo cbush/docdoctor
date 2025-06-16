@@ -135,7 +135,6 @@ export const removeCodeBlocks = async (
 /**
  * Remove the code block directive and option lines, and get only the code text itself
  * @param inputString - The entirety of the code block directive, including the `.. code-block::` directive start and code content
- * @param indentWidth - The start column of the code block text, to properly adjust the offset to un-indent nested content
  */
 export const getFormattedCodeBlockTextFromDirective = (
   inputString: string
