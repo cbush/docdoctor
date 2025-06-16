@@ -309,7 +309,7 @@ const makeLiteralincludeFilePath = (
 };
 
 /**
- * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `untested-files` directory
+ * Write the code blocks from the page to files of the appropriate type at the appropriate location in the `code-examples` directory
  *
  * @param pageWriteData - Data required to write the code blocks to file, including path info, directory info, and the code block content
  */
@@ -357,17 +357,14 @@ const makeCodeBlockDirectoryFromPageFilepath = (filepath: string): string => {
     pathSegments.length > 1 ? pathSegments.slice(1) : [];
   // Join the remaining segments back into a path
   const pathMinusStartDir = `${path.sep}${removedFirstSegment.join(path.sep)}`;
-  console.log(`Path minus start dir is: ${pathMinusStartDir}`);
   const baseName = path.basename(filepath);
   const extension = path.extname(filepath);
-  const untestedDir = "untested-examples";
+  const untestedDir = "code-examples";
   const codeBlockPageDir = baseName.replace(extension, "");
-  console.log(`Code block page dir is: ${codeBlockPageDir}`);
   const relPathIncludingSubdirs = pathMinusStartDir.replace(
     baseName,
     codeBlockPageDir
   );
-  console.log(`Rel path including subdirs is: ${codeBlockPageDir}`);
   return path.join(untestedDir, relPathIncludingSubdirs);
 };
 
@@ -404,8 +401,8 @@ async function walkDirectory(
     const stats = await fs.stat(entryPath);
 
     if (stats.isDirectory()) {
-      // We don't want to process any files in the 'untested-examples' directory
-      if (entryPath.includes("untested-examples")) {
+      // We don't want to process any files in the 'code-examples' directory
+      if (entryPath.includes("code-examples")) {
         continue;
       }
       await walkDirectory(entryPath, callback); // Recurse into subdirectory
