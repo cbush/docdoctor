@@ -162,15 +162,12 @@ export const getFormattedCodeBlockTextFromDirective = (
   // Collect the remaining lines starting from the first non-meta line
   const remainingLines = lines.slice(index);
   const trimmedLines: string[] = [];
-  let isFirstLine = true;
-  let indentOffset = 0;
-  for (const line of remainingLines) {
+  if (remainingLines.length > 0) {
     // Calculate the offset for whitespace from the first line. Remove the same N character count from that and every subsequent line.
-    if (isFirstLine) {
-      indentOffset = countLeadingWhitespace(line);
-      isFirstLine = false;
-    }
-    trimmedLines.push(trimLeadingNSpaces(line, indentOffset));
+    const indentOffset = countLeadingWhitespace(remainingLines[0]);
+    trimmedLines.push(
+      ...remainingLines.map((line) => trimLeadingNSpaces(line, indentOffset))
+    );
   }
 
   // Return the remaining lines joined back into a string
